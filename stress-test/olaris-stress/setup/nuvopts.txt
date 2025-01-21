@@ -1,0 +1,13 @@
+Section:
+  nuv setup 
+
+Usage:
+  setup devcluster [--uninstall|--status] 
+  
+Commands:
+  setup devcluster    deploy Nuvolaris in a devcluster created locally
+                      you need Docker Desktop available with at least 6G of memory assigned
+
+Options:
+  --uninstall         execute an uninstall instead of an installation 
+  --status            show the status instead of an installation 

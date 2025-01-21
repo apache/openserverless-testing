@@ -1,0 +1,299 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+name: AllTests
+run-name: Testing openserverless-testing branch/tag ${{ github.ref_name}}
+
+on:
+  push:
+    tags:
+    - '*-*'
+    branches-ignore: '*'
+
+env:
+  PLATFORM: ${{ github.ref_name }}
+  USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+  OPS_REPO: https://github.com/apache/openserverless-task
+  OPS_BRANCH: main
+  NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+  #NGROK_PASSWORD: ${{ secrets.NGROK_PASSWORD }}
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-22.04
+    # temporary disabled
+    #if: false # skip for now
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Add Missing plugin
+        run: |
+          # fix for missing auth-plugin
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+          sudo apt update
+          sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin kubectl  
+        if: ${{ startsWith(github.ref_name, 'gke') }}
+      - name: Install ops
+        run: |
+          curl -sL bit.ly/get-ops | bash          
+          ops -info
+          ops -t > /dev/null
+      - name: Load secret
+        uses: 1password/load-secrets-action@v2
+        with:
+          # Export loaded secrets as environment variables
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
+          NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
+          K3S_IP: op://OpenServerless/TESTING/K3S_IP
+          MK8S_IP: op://OpenServerless/TESTING/MK8S_IP
+          ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
+          AKS_KUBECONFIG_B64: op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
+          AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
+          AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
+          AWS_DEFAULT_REGION: op://OpenServerless/TESTING/AWS_DEFAULT_REGION
+          AWS_SSHKEY: op://OpenServerless/TESTING/AWS_SSHKEY
+          EKS_KUBECONFIG_B64: op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
+          #GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
+          #OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
+          #AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
+          #AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
+          #GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
+
+      - name: Debug Action (if requested)
+        run:  .github/debugAction.sh
+      - name: Wait for Debug (if requested)
+        run: .github/waitIfDebug.sh
+      - name: 1 Deploy
+        run: |
+             touch .secrets
+             tests/1-deploy.sh $PLATFORM
+      - name: 3 SysRedis
+        run: tests/3-sys-redis.sh $PLATFORM
+      - name: 4 SysMongo
+        run: tests/4a-sys-ferretdb.sh $PLATFORM
+      - name: 4b SysPostgres
+        run: tests/4b-sys-postgres.sh $PLATFORM
+      - name: 5 SysMinio
+        run: tests/5-sys-minio.sh $PLATFORM
+      - name: 6 Login
+        run: tests/6-login.sh $PLATFORM
+      - name: 7 Static
+        run: tests/7-static.sh $PLATFORM
+      - name: 8 UserRedis
+        run: tests/8-user-redis.sh $PLATFORM
+      - name: 9a UserFerretDB
+        run: tests/9a-user-ferretdb.sh $PLATFORM
+      - name: 9b UserPostgres
+        run: tests/9b-user-postgres.sh $PLATFORM
+      - name: 10 UserMinio
+        run: tests/10-user-minio.sh $PLATFORM
+      - name: 14 RuntimeTesting
+        run: tests/14-runtime-testing.sh $PLATFORM
+
+  test-windows:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: powershell
+    needs: test-linux
+    if: ${{ ! startsWith(github.ref_name, 'kind') }}
+    # temporary disabled
+    #if: false # skip for now
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # Install Git (which includes Git Bash)
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        if: ${{ startsWith(github.ref_name, 'gke') }}
+      - name: 'Update plugin'
+        if: ${{ startsWith(github.ref_name, 'gke') }}
+        run: gcloud components install gke-gcloud-auth-plugin
+      - name: Load secrets
+        uses: shyim/1password-load-secrets-action@v1
+        with:
+          # export also as environment variable
+          export: true
+          # mask the secrets in the logs
+          mask-secrets: true
+          # secret mapping
+          secrets: |
+            op://OpenServerless/TESTING/NGROK_PASSWORD
+            op://OpenServerless/TESTING/K3S_IP
+            op://OpenServerless/TESTING/MK8S_IP
+            op://OpenServerless/TESTING/ID_RSA_B64
+            op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
+            op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
+            op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
+            op://OpenServerless/TESTING/AWS_DEFAULT_REGION
+            op://OpenServerless/TESTING/AWS_SSHKEY
+            op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
+          #GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
+          #OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
+          #AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
+          #AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
+          #GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+      - name: Install ops
+        shell: powershell
+        run: |
+          irm bit.ly/get-ops-exe | iex
+      - name: Add ops to path for runner
+        shell: bash
+        run: |
+          OPS_BIN_PATH=$HOME/.local/bin/
+          echo "PATH=$OPS_BIN_PATH:$PATH" >> $GITHUB_ENV
+      - name: Check Ops
+        shell: bash
+        run: |
+          ops -info
+          ops -t > /dev/null
+      - name: Ops Update
+        shell: bash
+        run: |
+          ops -update
+          ops -info
+
+      - name: 1 Deploy
+        shell: bash
+        run: |
+          touch .secrets
+          tests/1-deploy.sh $PLATFORM
+      - name: Debug Action (if requested)
+        shell: bash
+        run:  .github/debugAction.sh
+      - name: Wait for Debug (if requested)
+        shell: bash
+        run: .github/waitIfDebug.sh
+      - name: 3 SysRedis
+        shell: bash
+        run: tests/3-sys-redis.sh $PLATFORM
+      - name: 4 SysMongo
+        shell: bash
+        run: tests/4a-sys-ferretdb.sh $PLATFORM
+      - name: 4b SysPostgres
+        shell: bash
+        run: tests/4b-sys-postgres.sh $PLATFORM
+      - name: 5 SysMinio
+        shell: bash
+        run: tests/5-sys-minio.sh $PLATFORM
+      - name: 6 Login
+        shell: bash
+        run: tests/6-login.sh $PLATFORM
+      - name: 7 Static
+        shell: bash
+        run: tests/7-static.sh $PLATFORM
+      - name: 8 UserRedis
+        shell: bash
+        run: tests/8-user-redis.sh $PLATFORM
+      - name: 9a UserFerretDB
+        shell: bash
+        run: tests/9a-user-ferretdb.sh $PLATFORM
+      - name: 9b UserPostgres
+        shell: bash
+        run: tests/9b-user-postgres.sh $PLATFORM
+      - name: 10 UserMinio
+        shell: bash
+        run: tests/10-user-minio.sh $PLATFORM
+      - name: 14 RuntimeTesting
+        shell: bash
+        run: tests/14-runtime-testing.sh $PLATFORM
+
+  test-mac:
+    runs-on: macOS-14
+    defaults:
+      run:
+        shell: bash
+    #if: ${{ ! startsWith(github.ref_name, 'kind') }}
+    # temporary disabled
+    #if: false # skip for now
+    needs: test-windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        if: ${{ startsWith(github.ref_name, 'gke') }}
+      - name: 'Update plugin'
+        if: ${{ startsWith(github.ref_name, 'gke') }}
+        run: gcloud components install gke-gcloud-auth-plugin
+      - name: Install ops
+        run: |
+          curl -sL bit.ly/get-ops | /bin/bash
+          source ~/.bashrc
+          ops -info
+          ops -t > /dev/null
+          OPS_BIN_PATH=$(ops -i | grep "OPS_HOME" | awk -v FS=: '{print $2}' | tr -d " ")/bin
+          echo "PATH=$OPS_BIN_PATH:$PATH" >> $GITHUB_ENV
+      - name: Load secret
+        uses: 1password/load-secrets-action@v2
+        with:
+          # Export loaded secrets as environment variables
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
+          NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
+          K3S_IP: op://OpenServerless/TESTING/K3S_IP
+          MK8S_IP: op://OpenServerless/TESTING/MK8S_IP
+          ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
+          AKS_KUBECONFIG_B64: op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
+          AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
+          AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
+          AWS_DEFAULT_REGION: op://OpenServerless/TESTING/AWS_DEFAULT_REGION
+          AWS_SSHKEY: op://OpenServerless/TESTING/AWS_SSHKEY
+          EKS_KUBECONFIG_B64: op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
+          #GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
+          #OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
+          #AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
+          #AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
+          #GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
+      - name: Debug Action (if requested)
+        run: .github/debugAction.sh
+      - name: Wait for Debug (if requested)
+        run: .github/waitIfDebug.sh
+      - name: 1 Deploy
+        run: |
+          touch .secrets
+          tests/1-deploy.sh $PLATFORM
+      - name: 3 SysRedis
+        run: tests/3-sys-redis.sh $PLATFORM
+      - name: 4 SysMongo
+        run: tests/4a-sys-ferretdb.sh $PLATFORM
+      - name: 4b SysPostgres
+        run: tests/4b-sys-postgres.sh $PLATFORM
+      - name: 5 SysMinio
+        run: tests/5-sys-minio.sh $PLATFORM
+      - name: 6 Login
+        run: tests/6-login.sh $PLATFORM
+      - name: 7 Static
+        run: tests/7-static.sh $PLATFORM
+      - name: 8 UserRedis
+        run: tests/8-user-redis.sh $PLATFORM
+      - name: 9a UserFerretDB
+        run: tests/9a-user-ferretdb.sh $PLATFORM
+      - name: 9b UserPostgres
+        run: tests/9b-user-postgres.sh $PLATFORM
+      - name: 10 UserMinio
+        run: tests/10-user-minio.sh $PLATFORM
+      - name: 14 RuntimeTesting
+        run: tests/14-runtime-testing.sh $PLATFORM

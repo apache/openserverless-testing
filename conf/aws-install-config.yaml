@@ -1,0 +1,34 @@
+additionalTrustBundlePolicy: Proxyonly
+apiVersion: v1
+baseDomain: osh.nuvtest.net
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 3
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 1
+metadata:
+  creationTimestamp: null
+  name: nuvolaris
+networking:
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+  machineNetwork:
+    - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+    - 172.30.0.0/16
+platform:
+  aws:
+    region: us-east-2
+publish: External
+pullSecret: '{"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}'
+sshKey: |
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQClc+8ae07Llvzx4R1HmKl6hWg+IN9hB5wKVmZDezPYas6p6+hGdsZ/ipD+fwPUqpuq/rm1GqF6BIK9RI9lSlO8c/w3Gc1JTZxszCDo8F+x0cZpNokt8DHAt8TeV5nnIC6cZXsDCgf1TX8fj5b8aMfMMaprw6/LpvU7bG/rggamFUlj56qmbVmtOtgShRk5/pvnecVhcct9OA6EDTHRHtui2cOe06suVgc8VxrQjLstpVH0Hn5PPv9ukCSV01wMKCTV04AoA1Pt0iOu5nmbJj2GUI3lQeMbKqsxxPQq8wW1fnbEp4ctvvtbjUSrxx5kOrWPK+EFVZhmc9jvYyxxGfE5

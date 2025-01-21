@@ -1,0 +1,39 @@
+additionalTrustBundlePolicy: Proxyonly
+apiVersion: v1
+baseDomain: oshgcp.nuvtest.net
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform:
+    gcp:
+      type: n2-standard-2
+  replicas: 3
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform:
+    gcp:
+      type: n2-standard-4
+  replicas: 1
+metadata:
+  creationTimestamp: null
+  name: nuvolaris-testing
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  gcp:
+    projectID: nuvolaris-testing
+    region: us-east4
+publish: External
+pullSecret: '{"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}'
+sshKey: |
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDC49ph2zl4dgxyz+WOukEiJKmgZ23yGlgGxt/WAlnc4iMWG43upswNVdsIwyWZfmZiUnXIjx8/KaNxJ+0ttqpcrUWVZk6OZarclRToyC1X1OiGelS49AYxDhMS4eZLJfSvG2SHK1RrEtlzNq/9bsWRDu3ffVC0UZKMMJLHYyMWFW/XEplZbVbJAl0aIzUrL3ZHFKbg0zOwaM+KAxQ2ipFG9Ph/mfrhq9loiY7fv+UvqMdGCYHrEEBdA+HTRE4qUZ6o6RnsOZsL+8UHU2dtjQLwGsnUhU3+r3ngDBEWvETIW6oNLUFMZuk+QceGg67F2rA/9prU++RCENF8fbx6FfZ9FrBxbYtNx40HzlDjaY0+bSIjqxuoOngHsm1O1ZjeH0nI/ZKh3MABuQNyFF1QfvyG7FidP4MvtfDsckcoUDVcMo/dNO2CimmIMKgo7FR5WmOr0ePF0RrLL/MNCdUQ7jS3WBsXksC/UIb9cckgGEL68SCj8BSxsnnIrSQ5r6XG74s= ubuntu@ip-172-31-19-10
