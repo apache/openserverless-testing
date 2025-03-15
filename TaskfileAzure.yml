@@ -1,0 +1,83 @@
+version: '3'
+
+tasks:
+  dotenv:
+    - .env
+
+  check: 
+    - az account show
+
+  prereq:
+    - echo "PROJECT $AZCLOUD_PROJECT"
+    - test -n "$AZCLOUD_PROJECT" || (echo "Please set the AZCLOUD_PROJECT in .env"; exit 1)
+    - test -n "$AKS_PROJECT" || (echo "Please set the AKS_PROJECT in .env"; exit 1)
+
+  cluster:config:
+    - >
+      ops config aks
+      --project=$AKS_PROJECT
+      --name=$AKS_NAME
+      --count=$AKS_COUNT
+      --region=$AKS_REGION
+      --vm=$AKS_VM
+      --disk=$AKS_DISK
+      --key=$SSH_KEY
+
+  cluster:create:
+    - task: cluster:config
+    - ops cloud aks create
+
+
+  cluster:delete:
+    - task: cluster:config
+    - ops cloud aks delete
+
+  vm:config:
+    cmds:
+      - task: prereq
+      - >
+        ops config azcloud 
+        --project={{.AZCLOUD_PROJECT}} 
+        --region={{.AZCLOUD_REGION}}
+        --vm={{.AZCLOUD_VM}}
+        --disk={{.AZCLOUD_DISK}}
+        --image={{.AZCLOUD_IMAGE}} 
+        --key={{.SSH_KEY}}
+
+  vm:create:
+    cmds:
+      - task: prereq
+      - task: vm:config
+        vars:
+          AZCLOUD_VM: "{{ if eq .ARCH \"arm\" }}{{.AZCLOUD_VM_ARM}}{{ else }}{{.AZCLOUD_VM_X86}}{{ end }}"
+          AZCLOUD_IMAGE: "{{ if eq .ARCH \"arm\" }}{{.AZCLOUD_IMAGE_ARM}}{{ else }}{{.AZCLOUD_IMAGE_X86}}{{ end }}"
+      - ops cloud azcloud vm-create {{.NAME}}
+      - ops cloud azcloud vm-getip {{.NAME}} >_ip
+      - ops cloud {{.TYPE}} create $(cat _ip) ubuntu
+    requires:
+      vars: [ NAME, TYPE, ARCH ]
+
+  vm:delete:
+    cmds:
+      - task: prereq
+      - task: vm:config
+        vars:
+          AZCLOUD_VM: "{{ if eq .ARCH \"arm\" }}{{.AZCLOUD_VM_ARM}}{{ else }}{{.AZCLOUD_VM_X86}}{{ end }}"
+          AZCLOUD_IMAGE: "{{ if eq .ARCH \"arm\" }}{{.AZCLOUD_IMAGE_ARM}}{{ else }}{{.AZCLOUD_IMAGE_X86}}{{ end }}"
+      - ops cloud azcloud vm-delete {{.NAME}}
+    requires:
+      vars: [ NAME, ARCH ]
+
+
+  vm:getip:
+    cmds:
+      - ops cloud azcloud vm-getip {{.VM_NAME}} > _ip
+    requires:
+        vars: [VM_NAME]
+
+  zone:update:
+    silent: true
+    cmds:
+      - ops cloud azcloud zone-update {{.HOST}} --wildcard --ip={{.IP}}
+    requires:
+        vars: [HOST, IP]

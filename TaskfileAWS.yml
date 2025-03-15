@@ -1,0 +1,56 @@
+version: '3'
+
+tasks:
+
+  vm:list:
+  - ops cloud aws vm-list
+
+  vm:config:
+    - >
+      ops config aws 
+      --access="$AWS_ACCESS_KEY_ID" 
+      --secret="$AWS_SECRET_ACCESS_KEY" 
+      --region=us-east-2
+      --image=ami-024e6efaf93d85776
+      --vm=t3a.large
+      --vmuser=ubuntu
+      --disk=50 
+      --key="$AWS_DEFAULT_KEY_NAME"
+
+  vm:create:
+    cmds:
+    - task: vm:config
+    - ops cloud aws vm-create {{.NAME}}
+    - ops cloud aws vm-getip {{.NAME}} >_ip
+    - ops cloud {{.TYPE}} create $(cat _ip) ubuntu
+    requires: 
+      vars: [NAME, TYPE]
+
+  vm:delete:
+    cmds:
+    - task: vm:config
+    - ops cloud aws vm-delete {{.NAME}}
+    requires: 
+      vars: [NAME]
+
+  cluster:config:
+    - >
+      ops config eks
+      --access="$AWS_ACCESS_KEY_ID" 
+      --secret="$AWS_SECRET_ACCESS_KEY" 
+      --name=$EKS_NAME
+      --region=$EKS_REGION
+      --count=$EKS_COUNT
+      --vm=$EKS_VM
+      --disk=$EKS_DISK
+      --key="$AWS_SSHKEY"
+      --kubever="$EKS_KUBERNETES_VERSION"
+
+  cluster:create:
+    - task: cluster:config
+    - ops cloud eks create
+
+  cluster:delete:
+    - task: cluster:config
+    - ops cloud eks delete
+

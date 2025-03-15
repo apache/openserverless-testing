@@ -1,0 +1,59 @@
+version: '3'
+
+tasks:
+ 
+  cluster:config:
+    - >
+      nuv config gke
+      --name=$GKE_PROJECT 
+      --project="$GKE_PROJECT"
+      --region="us-east1"
+      --count="3"
+      --vm="e2-standard-2"
+      --disk="50"
+
+  cluster:create:
+    - task: cluster:config
+    - nuv cloud gke create
+
+  cluster:delete:
+    - task: cluster:config
+    - nuv cloud gke delete
+
+  vm:config:
+    cmds:
+    - > 
+      nuv config gcloud 
+      --project=$GKE_PROJECT 
+      --region="{{.REGION}}" 
+      --vm="{{.VM_TYPE}}"
+      --disk="200"
+      --image="{{.IMAGE}}" 
+      --key=$HOME/.ssh/id_rsa.pub
+    requires: 
+      vars: [VM_TYPE,REGION,IMAGE]         
+
+  vm:create:
+    cmds:
+    - task: vm:config
+      vars:
+        VM_TYPE: "{{.VM_TYPE}}"
+        REGION: "{{.REGION}}"
+        IMAGE: "{{.IMAGE}}"
+    - nuv cloud gcloud vm-create {{.NAME}}
+    - nuv cloud gcloud vm-getip {{.NAME}} >_ip
+    - nuv cloud {{.TYPE}} create SERVER=$(cat _ip) USERNAME=ubuntu
+    requires: 
+      vars: [NAME, TYPE, VM_TYPE, REGION, IMAGE]
+
+  vm:delete:
+    cmds:
+    - task: vm:config
+      vars:
+        VM_TYPE: "{{.VM_TYPE}}"
+        REGION: "{{.REGION}}"
+        IMAGE: "{{.IMAGE}}"
+    - nuv cloud gcloud vm-delete {{.NAME}}
+    requires: 
+      vars: [NAME,VM_TYPE,REGION, IMAGE]    
+
