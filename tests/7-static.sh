@@ -56,7 +56,7 @@ kind)
     RES=false
     while [[ $N -lt 12 ]]
     do 
-        if curl $STATIC_URL | grep "Welcome to Nuvolaris static content distributor landing page!!!"; then            
+        if curl $STATIC_URL | grep " Welcome to Apache OpenServerless (incubating) static content distributor landing page!!!"; then            
             echo SUCCESS STATIC
             RES=true; break
         else
