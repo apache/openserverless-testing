@@ -1,3 +1,4 @@
 [submodule "tasks"]
 	path = tasks
 	url = https://github.com/apache/openserverless-task
+        branch = main
