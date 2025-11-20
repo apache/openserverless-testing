@@ -120,6 +120,9 @@ spec:
                     postgres:
                       description: deploys postgress if supported by the operator
                       type: boolean                      
+                    spark:
+                      description: deploys Apache Spark if supported by the operator
+                      type: boolean
                   required:
                     - openwhisk
                     - couchdb
