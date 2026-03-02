@@ -64,8 +64,8 @@ k3s-amd)
         exit 1
     fi
     # install cluster
-    ops setup server "$(cat _ip)" ubuntu --uninstall
-    ops setup server "$(cat _ip)" ubuntu
+    ops setup server "$(cat _ip)" "${SSH_USER:-root}" --uninstall
+    ops setup server "$(cat _ip)" "${SSH_USER:-root}"
     ;;
 k3s-arm)
     # single ARM VM with k3s installed via ops setup server
@@ -84,8 +84,8 @@ k3s-arm)
         exit 1
     fi
     # install cluster
-    ops setup server "$(cat _ip)" ubuntu --uninstall
-    ops setup server "$(cat _ip)" ubuntu
+    ops setup server "$(cat _ip)" "${SSH_USER:-root}" --uninstall
+    ops setup server "$(cat _ip)" "${SSH_USER:-root}"
     ;;
 
 # ---------------------------------------------------------------

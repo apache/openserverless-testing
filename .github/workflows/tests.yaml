@@ -35,6 +35,7 @@ env:
   K3S_AMD_IP: ${{ secrets.K3S_AMD_IP }}
   K3S_ARM_IP: ${{ secrets.K3S_ARM_IP }}
   ID_RSA_B64: ${{ secrets.ID_RSA_B64 }}
+  SSH_USER: ${{ secrets.SSH_USER || 'root' }}
 
   # --- Generic K8s cluster (kubeconfig-based) ---
   K8S_KUBECONFIG_B64: ${{ secrets.K8S_KUBECONFIG_B64 }}
