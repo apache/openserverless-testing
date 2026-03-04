@@ -16,9 +16,10 @@
 # specific language governing permissions and limitations
 # under the License.
 TYPE="${1:?test type}"
-# Extract platform name: everything before the last '-'
-# e.g. "k3s-amd-test1" -> "k3s-amd", "kind-test1" -> "kind", "k8s-run3" -> "k8s"
-TYPE="$(echo $TYPE | sed 's/-[^-]*$//')"
+# Strip trailing timestamp suffix (digits only) added by tag-based triggers.
+# e.g. "k3s-amd-2603041800" -> "k3s-amd", "kind-2603041800" -> "kind"
+# Clean platform names like "k3s-amd" are left unchanged.
+TYPE="$(echo $TYPE | sed 's/-[0-9]*$//')"
 
 cd "$(dirname $0)"
 
