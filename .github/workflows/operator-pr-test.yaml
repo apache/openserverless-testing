@@ -1,0 +1,137 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+name: Operator PR Test
+run-name: "Operator PR #${{ github.event.client_payload.pr_number }} on ${{ github.event.client_payload.platform }}"
+
+on:
+  repository_dispatch:
+    types: [operator-pr-test]
+
+env:
+  PR_NUMBER: ${{ github.event.client_payload.pr_number }}
+  PR_REF: ${{ github.event.client_payload.pr_ref }}
+  PR_SHA: ${{ github.event.client_payload.pr_sha }}
+  OPERATOR_REPO: ${{ github.event.client_payload.operator_repo }}
+  PLATFORM: ${{ github.event.client_payload.platform }}
+  OPERATOR_IMAGE: ghcr.io/${{ github.repository_owner }}/openserverless-testing
+
+  # --- k3s single-VM platforms ---
+  K3S_AMD_IP: ${{ secrets.K3S_AMD_IP }}
+  K3S_ARM_IP: ${{ secrets.K3S_ARM_IP }}
+  ID_RSA_B64: ${{ secrets.ID_RSA_B64 }}
+  SSH_USER: ${{ secrets.SSH_USER || 'root' }}
+
+  # --- Generic K8s cluster (kubeconfig-based) ---
+  K8S_KUBECONFIG_B64: ${{ secrets.K8S_KUBECONFIG_B64 }}
+
+  # --- Per-platform DNS FQDN ---
+  K3S_AMD_APIHOST: ${{ secrets.K3S_AMD_APIHOST }}
+  K3S_ARM_APIHOST: ${{ secrets.K3S_ARM_APIHOST }}
+  K8S_APIHOST: ${{ secrets.K8S_APIHOST }}
+  APIHOST: ${{ secrets.APIHOST }}
+
+  # --- Debug ---
+  NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+  NGROK_PASSWORD: ${{ secrets.NGROK_PASSWORD }}
+
+jobs:
+  operator-pr-test:
+    name: "Test operator PR #${{ github.event.client_payload.pr_number }}"
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout testing repo
+        uses: actions/checkout@v4
+
+      - name: Clone operator PR branch with submodules
+        run: |
+          git clone --recurse-submodules --branch "$PR_REF" \
+            "https://github.com/$OPERATOR_REPO.git" _operator
+
+      - name: Verify submodule
+        run: |
+          echo "Checking olaris/ submodule content..."
+          ls _operator/olaris/opsfile.yml _operator/olaris/opsroot.json
+          echo "Submodule OK"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push operator image
+        id: build
+        run: |
+          SHORT_SHA="${PR_SHA:0:7}"
+          IMAGE_TAG="pr-${PR_NUMBER}-${SHORT_SHA}"
+          FULL_IMAGE="${OPERATOR_IMAGE}:${IMAGE_TAG}"
+          echo "Building ${FULL_IMAGE} from _operator/"
+          docker build -t "${FULL_IMAGE}" _operator/
+          docker push "${FULL_IMAGE}"
+          echo "image_ref=${FULL_IMAGE}" >> "$GITHUB_OUTPUT"
+
+      - name: Patch opsroot.json with PR image
+        run: |
+          jq --arg img "${{ steps.build.outputs.image_ref }}" \
+            '.config.images.operator = $img' \
+            _operator/olaris/opsroot.json > _operator/olaris/opsroot.json.tmp
+          mv _operator/olaris/opsroot.json.tmp _operator/olaris/opsroot.json
+          echo "Patched opsroot.json:"
+          cat _operator/olaris/opsroot.json
+
+      - name: Set OPS_ROOT
+        run: echo "OPS_ROOT=$(pwd)/_operator/olaris" >> "$GITHUB_ENV"
+
+      - name: Install ops
+        run: |
+          curl -sL bit.ly/get-ops | bash
+          ops -info
+          ops -t > /dev/null
+
+      - name: 1 Deploy
+        run: |
+          touch .secrets
+          tests/1-deploy.sh $PLATFORM
+      - name: 3 SysRedis
+        run: tests/3-sys-redis.sh $PLATFORM
+      - name: 4 SysMongo
+        run: tests/4a-sys-ferretdb.sh $PLATFORM
+      - name: 4b SysPostgres
+        run: tests/4b-sys-postgres.sh $PLATFORM
+      - name: 5 SysMinio
+        run: tests/5-sys-minio.sh $PLATFORM
+      - name: 6 Login
+        run: tests/6-login.sh $PLATFORM
+      - name: 7 Static
+        run: tests/7-static.sh $PLATFORM
+      - name: 8 UserRedis
+        run: tests/8-user-redis.sh $PLATFORM
+      - name: 9a UserFerretDB
+        run: tests/9a-user-ferretdb.sh $PLATFORM
+      - name: 9b UserPostgres
+        run: tests/9b-user-postgres.sh $PLATFORM
+      - name: 10 UserMinio
+        run: tests/10-user-minio.sh $PLATFORM
+      - name: 14 RuntimeTesting
+        run: tests/14-runtime-testing.sh $PLATFORM
