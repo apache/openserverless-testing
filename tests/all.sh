@@ -16,21 +16,23 @@
 # specific language governing permissions and limitations
 # under the License.
 TYPE="${1:?test type}"
-TYPE="$(echo $TYPE | awk -F- '{print $1}')"
+# Extract platform name: everything before the last '-'
+# e.g. "k3s-amd-test1" -> "k3s-amd", "kind-test1" -> "kind", "k8s-run3" -> "k8s"
+TYPE="$(echo $TYPE | sed 's/-[^-]*$//')"
 
-# echo
-export OPS_BRANCH=main
+# Use OPS_BRANCH from environment if set, otherwise default to main
+export OPS_BRANCH="${OPS_BRANCH:-main}"
 echo "*** using $OPS_BRANCH ***"
 
 # if type not in (kind, k3s, mk8s, aks, eks, gke) exit
 
 case "$TYPE" in
-"k3s" | "mk8s" | "kind" | "gke" | "aks" | "eks" | "osh")
+"k3s-amd" | "k3s-arm" | "k8s" | "kind" | "mk8s" | "gke" | "aks" | "eks" | "osh")
 	# The TYPE matches one of the allowed values, so continue with the script
 	;;
 *)
 	# TYPE does not match any of the allowed values, so exit with an error message
-	echo "Error: input must be one of 'kind', 'k3s', 'mk8s', 'gke', 'aks', 'eks' or 'osh'."
+	echo "Error: input must be one of 'kind', 'k3s-amd', 'k3s-arm', 'k8s', 'mk8s', 'gke', 'aks', 'eks', or 'osh'."
 	exit 1
 	;;
 esac
