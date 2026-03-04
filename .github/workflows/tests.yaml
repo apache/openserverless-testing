@@ -22,7 +22,6 @@ on:
   push:
     tags:
     - '*-*'
-    branches-ignore: '*'
 
 env:
   PLATFORM: ${{ github.ref_name }}
