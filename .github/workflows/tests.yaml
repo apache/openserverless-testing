@@ -59,24 +59,12 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
           NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
-          K3S_AMD_IP: op://OpenServerless/TESTING/K3S_AMD_IP
-          K3S_ARM_IP: op://OpenServerless/TESTING/K3S_ARM_IP
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
           K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
           K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
           K3S_ARM_APIHOST: op://OpenServerless/TESTING/K3S_ARM_APIHOST
           K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
           APIHOST: op://OpenServerless/TESTING/APIHOST
-          # Uncomment when cloud providers are re-enabled:
-          # AKS_KUBECONFIG_B64: op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
-          # AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          # AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          # AWS_DEFAULT_REGION: op://OpenServerless/TESTING/AWS_DEFAULT_REGION
-          # AWS_SSHKEY: op://OpenServerless/TESTING/AWS_SSHKEY
-          # EKS_KUBECONFIG_B64: op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
-          # GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
-          # OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
-          # GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
       - name: Debug Action (if requested)
         run:  .github/debugAction.sh
       - name: Wait for Debug (if requested)
@@ -154,8 +142,6 @@ jobs:
           mask-secrets: true
           secrets: |
             op://OpenServerless/TESTING/NGROK_PASSWORD
-            op://OpenServerless/TESTING/K3S_AMD_IP
-            op://OpenServerless/TESTING/K3S_ARM_IP
             op://OpenServerless/TESTING/ID_RSA_B64
             op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
             op://OpenServerless/TESTING/K3S_AMD_APIHOST
@@ -245,24 +231,12 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
           NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
-          K3S_AMD_IP: op://OpenServerless/TESTING/K3S_AMD_IP
-          K3S_ARM_IP: op://OpenServerless/TESTING/K3S_ARM_IP
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
           K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
           K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
           K3S_ARM_APIHOST: op://OpenServerless/TESTING/K3S_ARM_APIHOST
           K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
           APIHOST: op://OpenServerless/TESTING/APIHOST
-          # Uncomment when cloud providers are re-enabled:
-          # AKS_KUBECONFIG_B64: op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
-          # AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          # AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          # AWS_DEFAULT_REGION: op://OpenServerless/TESTING/AWS_DEFAULT_REGION
-          # AWS_SSHKEY: op://OpenServerless/TESTING/AWS_SSHKEY
-          # EKS_KUBECONFIG_B64: op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
-          # GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
-          # OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
-          # GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
       - name: Debug Action (if requested)
         run: .github/debugAction.sh
       - name: Wait for Debug (if requested)

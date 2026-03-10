@@ -52,41 +52,30 @@ kind)
 k3s-amd)
     # single AMD VM with k3s installed via ops setup server
     ops config reset
-    if test -n "$K3S_AMD_IP"
+    K3S_AMD_APIHOST="${K3S_AMD_APIHOST:-${APIHOST:-api.k3s-amd.opstest.top}}"
+    if test -z "$K3S_AMD_APIHOST"
     then
-        echo $K3S_AMD_IP>_ip
-        ops config apihost "${K3S_AMD_APIHOST:-${APIHOST:-api.k3s-amd.opstest.top}}"
-    else
-        # Commented out -- Azure provisioning not available:
-        # task azure:vm:config
-        # ops cloud azcloud vm-create k3s-test
-        # ops cloud azcloud zone-update k3s.opstest.top --wildcard --vm=k3s-test
-        echo "ERROR: K3S_AMD_IP is required (Azure provisioning is disabled)"
+        echo "ERROR: K3S_AMD_APIHOST is required"
         exit 1
     fi
-    # install cluster
-    ops setup server "$(cat _ip)" "${SSH_USER:-root}" --uninstall
-    ops setup server "$(cat _ip)" "${SSH_USER:-root}"
+    ops config apihost "$K3S_AMD_APIHOST"
+    # install cluster (SSH via DNS hostname)
+    ops setup server "$K3S_AMD_APIHOST" "${SSH_USER:-root}" --uninstall
+    ops setup server "$K3S_AMD_APIHOST" "${SSH_USER:-root}"
     ;;
 k3s-arm)
     # single ARM VM with k3s installed via ops setup server
     ops config reset
-    if test -n "$K3S_ARM_IP"
+    K3S_ARM_APIHOST="${K3S_ARM_APIHOST:-${APIHOST:-api.k3s-arm.opstest.top}}"
+    if test -z "$K3S_ARM_APIHOST"
     then
-        echo $K3S_ARM_IP>_ip
-        ops config apihost "${K3S_ARM_APIHOST:-${APIHOST:-api.k3s-arm.opstest.top}}"
-    else
-        # Commented out -- Azure provisioning not available:
-        # task azure:vm:config
-        # ops cloud azcloud vm-create k3s-arm-test
-        # ops cloud azcloud zone-update k3s-arm.opstest.top --wildcard --vm=k3s-arm-test
-        # ops cloud aws vm-getip k3s-test >_ip
-        echo "ERROR: K3S_ARM_IP is required (Azure provisioning is disabled)"
+        echo "ERROR: K3S_ARM_APIHOST is required"
         exit 1
     fi
-    # install cluster
-    ops setup server "$(cat _ip)" "${SSH_USER:-root}" --uninstall
-    ops setup server "$(cat _ip)" "${SSH_USER:-root}"
+    ops config apihost "$K3S_ARM_APIHOST"
+    # install cluster (SSH via DNS hostname)
+    ops setup server "$K3S_ARM_APIHOST" "${SSH_USER:-root}" --uninstall
+    ops setup server "$K3S_ARM_APIHOST" "${SSH_USER:-root}"
     ;;
 
 # ---------------------------------------------------------------

@@ -100,8 +100,6 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
           NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
-          K3S_AMD_IP: op://OpenServerless/TESTING/K3S_AMD_IP
-          K3S_ARM_IP: op://OpenServerless/TESTING/K3S_ARM_IP
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
           K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
           K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
