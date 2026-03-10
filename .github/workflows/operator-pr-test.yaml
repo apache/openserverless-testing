@@ -30,24 +30,7 @@ env:
   PLATFORM: ${{ github.event.client_payload.platform }}
   OPERATOR_IMAGE: ghcr.io/${{ github.repository_owner }}/openserverless-testing
 
-  # --- k3s single-VM platforms ---
-  K3S_AMD_IP: ${{ secrets.K3S_AMD_IP }}
-  K3S_ARM_IP: ${{ secrets.K3S_ARM_IP }}
-  ID_RSA_B64: ${{ secrets.ID_RSA_B64 }}
-  SSH_USER: ${{ secrets.SSH_USER || 'root' }}
-
-  # --- Generic K8s cluster (kubeconfig-based) ---
-  K8S_KUBECONFIG_B64: ${{ secrets.K8S_KUBECONFIG_B64 }}
-
-  # --- Per-platform DNS FQDN ---
-  K3S_AMD_APIHOST: ${{ secrets.K3S_AMD_APIHOST }}
-  K3S_ARM_APIHOST: ${{ secrets.K3S_ARM_APIHOST }}
-  K8S_APIHOST: ${{ secrets.K8S_APIHOST }}
-  APIHOST: ${{ secrets.APIHOST }}
-
-  # --- Debug ---
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-  NGROK_PASSWORD: ${{ secrets.NGROK_PASSWORD }}
 
 jobs:
   operator-pr-test:
@@ -108,6 +91,23 @@ jobs:
           curl -sL bit.ly/get-ops | bash
           ops -info
           ops -t > /dev/null
+
+      - name: Load secrets from 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
+          NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
+          K3S_AMD_IP: op://OpenServerless/TESTING/K3S_AMD_IP
+          K3S_ARM_IP: op://OpenServerless/TESTING/K3S_ARM_IP
+          ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
+          K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
+          K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
+          K3S_ARM_APIHOST: op://OpenServerless/TESTING/K3S_ARM_APIHOST
+          K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
+          APIHOST: op://OpenServerless/TESTING/APIHOST
 
       - name: 1 Deploy
         run: |
