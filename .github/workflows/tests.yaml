@@ -22,15 +22,12 @@ on:
   push:
     tags:
     - '*-*'
-    branches-ignore: '*'
 
 env:
   PLATFORM: ${{ github.ref_name }}
-  USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
-  OPS_REPO: https://github.com/apache/openserverless-task
-  OPS_BRANCH: main
+  OPS_REPO: ${{ vars.OPS_REPO || 'https://github.com/apache/openserverless-task' }}
+  OPS_BRANCH: ${{ vars.OPS_BRANCH || 'main' }}
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
-  #NGROK_PASSWORD: ${{ secrets.NGROK_PASSWORD }}
 
 jobs:
   test-linux:
@@ -40,43 +37,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Add Missing plugin
-        run: |
-          # fix for missing auth-plugin
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-          sudo apt update
-          sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin kubectl  
-        if: ${{ startsWith(github.ref_name, 'gke') }}
+      # Commented out -- GKE plugin not needed without GCP environment:
+      # - name: Add Missing plugin
+      #   run: |
+      #     # fix for missing auth-plugin
+      #     echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+      #     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+      #     sudo apt update
+      #     sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin kubectl
+      #   if: ${{ startsWith(github.ref_name, 'gke') }}
       - name: Install ops
         run: |
-          curl -sL bit.ly/get-ops | bash          
+          curl -sL bit.ly/get-ops | bash
           ops -info
           ops -t > /dev/null
-      - name: Load secret
+      - name: Load secrets from 1Password
         uses: 1password/load-secrets-action@v2
         with:
-          # Export loaded secrets as environment variables
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
           NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
-          K3S_IP: op://OpenServerless/TESTING/K3S_IP
-          MK8S_IP: op://OpenServerless/TESTING/MK8S_IP
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
-          AKS_KUBECONFIG_B64: op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
-          AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          AWS_DEFAULT_REGION: op://OpenServerless/TESTING/AWS_DEFAULT_REGION
-          AWS_SSHKEY: op://OpenServerless/TESTING/AWS_SSHKEY
-          EKS_KUBECONFIG_B64: op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
-          #GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
-          #OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
-          #AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          #AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          #GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
-
+          K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
+          K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
+          K3S_ARM_APIHOST: op://OpenServerless/TESTING/K3S_ARM_APIHOST
+          K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
+          APIHOST: op://OpenServerless/TESTING/APIHOST
       - name: Debug Action (if requested)
         run:  .github/debugAction.sh
       - name: Wait for Debug (if requested)
@@ -121,38 +109,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         # Install Git (which includes Git Bash)
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
-        if: ${{ startsWith(github.ref_name, 'gke') }}
-      - name: 'Update plugin'
-        if: ${{ startsWith(github.ref_name, 'gke') }}
-        run: gcloud components install gke-gcloud-auth-plugin
-      - name: Load secrets
-        uses: shyim/1password-load-secrets-action@v1
-        with:
-          # export also as environment variable
-          export: true
-          # mask the secrets in the logs
-          mask-secrets: true
-          # secret mapping
-          secrets: |
-            op://OpenServerless/TESTING/NGROK_PASSWORD
-            op://OpenServerless/TESTING/K3S_IP
-            op://OpenServerless/TESTING/MK8S_IP
-            op://OpenServerless/TESTING/ID_RSA_B64
-            op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
-            op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-            op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-            op://OpenServerless/TESTING/AWS_DEFAULT_REGION
-            op://OpenServerless/TESTING/AWS_SSHKEY
-            op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
-          #GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
-          #OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
-          #AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          #AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          #GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+      # Commented out -- GKE plugin not needed without GCP environment:
+      # - name: 'Set up Cloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v1'
+      #   if: ${{ startsWith(github.ref_name, 'gke') }}
+      # - name: 'Update plugin'
+      #   if: ${{ startsWith(github.ref_name, 'gke') }}
+      #   run: gcloud components install gke-gcloud-auth-plugin
       - name: Install ops
         shell: powershell
         run: |
@@ -172,6 +135,21 @@ jobs:
         run: |
           ops -update
           ops -info
+      - name: Load secrets from 1Password
+        uses: shyim/1password-load-secrets-action@v1
+        with:
+          export: true
+          mask-secrets: true
+          secrets: |
+            op://OpenServerless/TESTING/NGROK_PASSWORD
+            op://OpenServerless/TESTING/ID_RSA_B64
+            op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
+            op://OpenServerless/TESTING/K3S_AMD_APIHOST
+            op://OpenServerless/TESTING/K3S_ARM_APIHOST
+            op://OpenServerless/TESTING/K8S_APIHOST
+            op://OpenServerless/TESTING/APIHOST
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 
       - name: 1 Deploy
         shell: bash
@@ -230,12 +208,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
-        if: ${{ startsWith(github.ref_name, 'gke') }}
-      - name: 'Update plugin'
-        if: ${{ startsWith(github.ref_name, 'gke') }}
-        run: gcloud components install gke-gcloud-auth-plugin
+      # Commented out -- GKE plugin not needed without GCP environment:
+      # - name: 'Set up Cloud SDK'
+      #   uses: 'google-github-actions/setup-gcloud@v1'
+      #   if: ${{ startsWith(github.ref_name, 'gke') }}
+      # - name: 'Update plugin'
+      #   if: ${{ startsWith(github.ref_name, 'gke') }}
+      #   run: gcloud components install gke-gcloud-auth-plugin
       - name: Install ops
         run: |
           curl -sL bit.ly/get-ops | /bin/bash
@@ -244,29 +223,20 @@ jobs:
           ops -t > /dev/null
           OPS_BIN_PATH=$(ops -i | grep "OPS_HOME" | awk -v FS=: '{print $2}' | tr -d " ")/bin
           echo "PATH=$OPS_BIN_PATH:$PATH" >> $GITHUB_ENV
-      - name: Load secret
+      - name: Load secrets from 1Password
         uses: 1password/load-secrets-action@v2
         with:
-          # Export loaded secrets as environment variables
           export-env: true
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
           NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
-          K3S_IP: op://OpenServerless/TESTING/K3S_IP
-          MK8S_IP: op://OpenServerless/TESTING/MK8S_IP
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
-          AKS_KUBECONFIG_B64: op://OpenServerless/TESTING/AKS_KUBECONFIG_B64
-          AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          AWS_DEFAULT_REGION: op://OpenServerless/TESTING/AWS_DEFAULT_REGION
-          AWS_SSHKEY: op://OpenServerless/TESTING/AWS_SSHKEY
-          EKS_KUBECONFIG_B64: op://OpenServerless/TESTING/EKS_KUBECONFIG_B64
-          #GKE_KUBECONFIG_B64: op://OpenServerless/TESTING/GKE_KUBECONFIG_B64
-          #OPENSHIFT_KUBECONFIG_B64: op://OpenServerless/TESTING/OPENSHIFT_KUBECONFIG_B64
-          #AWS_ACCESS_KEY_ID: op://OpenServerless/TESTING/AWS_ACCESS_KEY_ID
-          #AWS_SECRET_ACCESS_KEY: op://OpenServerless/TESTING/AWS_SECRET_ACCESS_KEY
-          #GCLOUD_SERVICE_ACCOUNT_B64: op://OpenServerless/TESTING/GCLOUD_SERVICE_ACCOUNT_B64
+          K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
+          K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
+          K3S_ARM_APIHOST: op://OpenServerless/TESTING/K3S_ARM_APIHOST
+          K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
+          APIHOST: op://OpenServerless/TESTING/APIHOST
       - name: Debug Action (if requested)
         run: .github/debugAction.sh
       - name: Wait for Debug (if requested)
