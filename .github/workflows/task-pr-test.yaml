@@ -15,77 +15,42 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-name: Operator PR Test
-run-name: "Operator PR #${{ github.event.client_payload.pr_number }} on ${{ github.event.client_payload.selector || github.event.client_payload.platform }}"
+name: Task PR Test
+run-name: "Task PR #${{ github.event.client_payload.pr_number }} on ${{ github.event.client_payload.selector || github.event.client_payload.platform }}"
 
 on:
   repository_dispatch:
-    types: [operator-pr-test]
+    types: [task-pr-test]
 
 env:
   PR_NUMBER: ${{ github.event.client_payload.pr_number }}
   PR_REF: ${{ github.event.client_payload.pr_ref }}
   PR_SHA: ${{ github.event.client_payload.pr_sha }}
-  OPERATOR_REPO: ${{ github.event.client_payload.operator_repo }}
+  TASK_REPO: ${{ github.event.client_payload.task_repo }}
   SELECTOR: ${{ github.event.client_payload.selector || github.event.client_payload.platform }}
-  OPERATOR_IMAGE: ghcr.io/${{ github.repository_owner }}/openserverless-testing
-
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
 
 jobs:
-  operator-pr-test:
-    name: "Test operator PR #${{ github.event.client_payload.pr_number }}"
+  task-pr-test:
+    name: "Test task PR #${{ github.event.client_payload.pr_number }}"
     runs-on: ubuntu-22.04
-    permissions:
-      packages: write
     steps:
       - name: Checkout testing repo
         uses: actions/checkout@v4
 
-      - name: Clone operator PR branch with submodules
+      - name: Clone task PR branch
         run: |
-          git clone --recurse-submodules --branch "$PR_REF" \
-            "https://github.com/$OPERATOR_REPO.git" _operator
-          git -C _operator checkout "$PR_SHA"
+          git clone --branch "$PR_REF" \
+            "https://github.com/$TASK_REPO.git" _task
+          git -C _task checkout "$PR_SHA"
 
-      - name: Verify submodule
+      - name: Verify task checkout
         run: |
-          echo "Checking olaris/ submodule content..."
-          ls _operator/olaris/opsfile.yml _operator/olaris/opsroot.json
-          echo "Submodule OK"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push operator image
-        id: build
-        run: |
-          SHORT_SHA="${PR_SHA:0:7}"
-          IMAGE_TAG="pr-${PR_NUMBER}-${SHORT_SHA}"
-          FULL_IMAGE="${OPERATOR_IMAGE}:${IMAGE_TAG}"
-          echo "Building ${FULL_IMAGE} from _operator/"
-          docker build -t "${FULL_IMAGE}" _operator/
-          docker push "${FULL_IMAGE}"
-          echo "image_ref=${FULL_IMAGE}" >> "$GITHUB_OUTPUT"
-
-      - name: Patch opsroot.json with PR image
-        run: |
-          jq --arg img "${{ steps.build.outputs.image_ref }}" \
-            '.config.images.operator = $img' \
-            _operator/olaris/opsroot.json > _operator/olaris/opsroot.json.tmp
-          mv _operator/olaris/opsroot.json.tmp _operator/olaris/opsroot.json
-          echo "Patched opsroot.json:"
-          cat _operator/olaris/opsroot.json
+          ls _task/opsfile.yml _task/opsroot.json
+          git -C _task rev-parse HEAD
 
       - name: Set OPS_ROOT
-        run: echo "OPS_ROOT=$(pwd)/_operator/olaris" >> "$GITHUB_ENV"
+        run: echo "OPS_ROOT=$(pwd)/_task" >> "$GITHUB_ENV"
 
       - name: Install ops
         run: |

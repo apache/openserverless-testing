@@ -69,32 +69,8 @@ jobs:
         run:  .github/debugAction.sh
       - name: Wait for Debug (if requested)
         run: .github/waitIfDebug.sh
-      - name: 1 Deploy
-        run: |
-             touch .secrets
-             tests/1-deploy.sh $PLATFORM
-      - name: 3 SysRedis
-        run: tests/3-sys-redis.sh $PLATFORM
-      - name: 4 SysMongo
-        run: tests/4a-sys-ferretdb.sh $PLATFORM
-      - name: 4b SysPostgres
-        run: tests/4b-sys-postgres.sh $PLATFORM
-      - name: 5 SysMinio
-        run: tests/5-sys-minio.sh $PLATFORM
-      - name: 6 Login
-        run: tests/6-login.sh $PLATFORM
-      - name: 7 Static
-        run: tests/7-static.sh $PLATFORM
-      - name: 8 UserRedis
-        run: tests/8-user-redis.sh $PLATFORM
-      - name: 9a UserFerretDB
-        run: tests/9a-user-ferretdb.sh $PLATFORM
-      - name: 9b UserPostgres
-        run: tests/9b-user-postgres.sh $PLATFORM
-      - name: 10 UserMinio
-        run: tests/10-user-minio.sh $PLATFORM
-      - name: 14 RuntimeTesting
-        run: tests/14-runtime-testing.sh $PLATFORM
+      - name: Run GitHub Test Suite
+        run: tests/run-gh-suite.sh $PLATFORM
 
   test-windows:
     runs-on: windows-2022
@@ -151,50 +127,15 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 
-      - name: 1 Deploy
-        shell: bash
-        run: |
-          touch .secrets
-          tests/1-deploy.sh $PLATFORM
       - name: Debug Action (if requested)
         shell: bash
         run:  .github/debugAction.sh
       - name: Wait for Debug (if requested)
         shell: bash
         run: .github/waitIfDebug.sh
-      - name: 3 SysRedis
+      - name: Run GitHub Test Suite
         shell: bash
-        run: tests/3-sys-redis.sh $PLATFORM
-      - name: 4 SysMongo
-        shell: bash
-        run: tests/4a-sys-ferretdb.sh $PLATFORM
-      - name: 4b SysPostgres
-        shell: bash
-        run: tests/4b-sys-postgres.sh $PLATFORM
-      - name: 5 SysMinio
-        shell: bash
-        run: tests/5-sys-minio.sh $PLATFORM
-      - name: 6 Login
-        shell: bash
-        run: tests/6-login.sh $PLATFORM
-      - name: 7 Static
-        shell: bash
-        run: tests/7-static.sh $PLATFORM
-      - name: 8 UserRedis
-        shell: bash
-        run: tests/8-user-redis.sh $PLATFORM
-      - name: 9a UserFerretDB
-        shell: bash
-        run: tests/9a-user-ferretdb.sh $PLATFORM
-      - name: 9b UserPostgres
-        shell: bash
-        run: tests/9b-user-postgres.sh $PLATFORM
-      - name: 10 UserMinio
-        shell: bash
-        run: tests/10-user-minio.sh $PLATFORM
-      - name: 14 RuntimeTesting
-        shell: bash
-        run: tests/14-runtime-testing.sh $PLATFORM
+        run: tests/run-gh-suite.sh $PLATFORM
 
   test-mac:
     runs-on: macOS-14
@@ -241,29 +182,5 @@ jobs:
         run: .github/debugAction.sh
       - name: Wait for Debug (if requested)
         run: .github/waitIfDebug.sh
-      - name: 1 Deploy
-        run: |
-          touch .secrets
-          tests/1-deploy.sh $PLATFORM
-      - name: 3 SysRedis
-        run: tests/3-sys-redis.sh $PLATFORM
-      - name: 4 SysMongo
-        run: tests/4a-sys-ferretdb.sh $PLATFORM
-      - name: 4b SysPostgres
-        run: tests/4b-sys-postgres.sh $PLATFORM
-      - name: 5 SysMinio
-        run: tests/5-sys-minio.sh $PLATFORM
-      - name: 6 Login
-        run: tests/6-login.sh $PLATFORM
-      - name: 7 Static
-        run: tests/7-static.sh $PLATFORM
-      - name: 8 UserRedis
-        run: tests/8-user-redis.sh $PLATFORM
-      - name: 9a UserFerretDB
-        run: tests/9a-user-ferretdb.sh $PLATFORM
-      - name: 9b UserPostgres
-        run: tests/9b-user-postgres.sh $PLATFORM
-      - name: 10 UserMinio
-        run: tests/10-user-minio.sh $PLATFORM
-      - name: 14 RuntimeTesting
-        run: tests/14-runtime-testing.sh $PLATFORM
+      - name: Run GitHub Test Suite
+        run: tests/run-gh-suite.sh $PLATFORM
