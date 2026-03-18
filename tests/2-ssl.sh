@@ -23,7 +23,9 @@ then
 fi
 
 # TYPE="$(ops debug detect)"
-TYPE="${1:?test type}"
+. "$(dirname "$0")/lib/selector.sh"
+resolve_test_selector "${1:?test selector}"
+TYPE="$TEST_SELECTOR"
 EMAIL=msciabarra@apache.org
 
 if [ "$TYPE" = "kind" ]; then

@@ -15,11 +15,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-TYPE="${1:?test type}"
-# Strip trailing timestamp suffix (digits only) added by tag-based triggers.
-# e.g. "k3s-amd-2603041800" -> "k3s-amd", "kind-2603041800" -> "kind"
-# Clean platform names like "k3s-amd" are left unchanged.
-TYPE="$(echo $TYPE | sed 's/-[0-9]*$//')"
+. "$(dirname "$0")/lib/selector.sh"
+resolve_test_selector "${1:?test selector}"
+TYPE="$TEST_SELECTOR"
 
 cd "$(dirname $0)"
 

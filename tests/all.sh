@@ -15,10 +15,9 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-TYPE="${1:?test type}"
-# Extract platform name: everything before the last '-'
-# e.g. "k3s-amd-test1" -> "k3s-amd", "kind-test1" -> "kind", "k8s-run3" -> "k8s"
-TYPE="$(echo $TYPE | sed 's/-[^-]*$//')"
+. "$(dirname "$0")/lib/selector.sh"
+resolve_test_selector "${1:?test selector}"
+TYPE="$TEST_SELECTOR"
 
 # Use OPS_BRANCH from environment if set, otherwise default to main
 export OPS_BRANCH="${OPS_BRANCH:-main}"
