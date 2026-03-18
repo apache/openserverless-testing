@@ -15,16 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-# Use client_payload.platform attribute to detect the platform being tested.
 name: On Tasks Testing Request
-run-name: Tagging openserverless-testing for platform ${{ github.event.client_payload.platform }}
+run-name: Tagging openserverless-testing for ${{ github.event.client_payload.test_tag || format('{0}-{1}', github.event.client_payload.test || github.event.client_payload.platform, github.event.client_payload.hash || github.event.client_payload.tag) }}
 
 on:
   repository_dispatch:
     types: [ olaris-testing-update ]
 
 env:
-  TAG: ${{ format('{0}-{1}', github.event.client_payload.platform, github.event.client_payload.tag) }}
+  TEST_TAG: ${{ github.event.client_payload.test_tag || format('{0}-{1}', github.event.client_payload.test || github.event.client_payload.platform, github.event.client_payload.hash || github.event.client_payload.tag) }}
 
 jobs:
   tags-push:
@@ -35,6 +34,6 @@ jobs:
         with:
           token: ${{ secrets.PAT }}
       - name: Tag
-        run: git tag $TAG
+        run: git tag $TEST_TAG
       - name: Push Tag
-        run: git push origin $TAG
+        run: git push origin $TEST_TAG

@@ -24,7 +24,7 @@ on:
     - '*-*'
 
 env:
-  PLATFORM: ${{ github.ref_name }}
+  TEST_TAG: ${{ github.ref_name }}
   OPS_REPO: ${{ vars.OPS_REPO || 'https://github.com/apache/openserverless-task' }}
   OPS_BRANCH: main
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
@@ -70,7 +70,7 @@ jobs:
       - name: Wait for Debug (if requested)
         run: .github/waitIfDebug.sh
       - name: Run GitHub Test Suite
-        run: tests/run-gh-suite.sh $PLATFORM
+        run: tests/run-gh-suite.sh "$TEST_TAG"
 
   test-windows:
     runs-on: windows-2022
@@ -135,7 +135,7 @@ jobs:
         run: .github/waitIfDebug.sh
       - name: Run GitHub Test Suite
         shell: bash
-        run: tests/run-gh-suite.sh $PLATFORM
+        run: tests/run-gh-suite.sh "$TEST_TAG"
 
   test-mac:
     runs-on: macOS-14
@@ -183,4 +183,4 @@ jobs:
       - name: Wait for Debug (if requested)
         run: .github/waitIfDebug.sh
       - name: Run GitHub Test Suite
-        run: tests/run-gh-suite.sh $PLATFORM
+        run: tests/run-gh-suite.sh "$TEST_TAG"

@@ -16,7 +16,7 @@
 # under the License.
 #
 name: Task PR Test
-run-name: "Task PR #${{ github.event.client_payload.pr_number }} on ${{ github.event.client_payload.selector || github.event.client_payload.platform }}"
+run-name: "Task PR #${{ github.event.client_payload.pr_number }} on ${{ github.event.client_payload.test_tag || github.event.client_payload.selector || github.event.client_payload.platform }}"
 
 on:
   repository_dispatch:
@@ -27,7 +27,9 @@ env:
   PR_REF: ${{ github.event.client_payload.pr_ref }}
   PR_SHA: ${{ github.event.client_payload.pr_sha }}
   TASK_REPO: ${{ github.event.client_payload.task_repo }}
-  SELECTOR: ${{ github.event.client_payload.selector || github.event.client_payload.platform }}
+  TEST_TAG: ${{ github.event.client_payload.test_tag || github.event.client_payload.selector || github.event.client_payload.platform }}
+  TEST_NAME: ${{ github.event.client_payload.test_name || '' }}
+  TEST_HASH: ${{ github.event.client_payload.test_hash || '' }}
   OPS_BRANCH: main
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
 
@@ -49,6 +51,19 @@ jobs:
         run: |
           ls _task/opsfile.yml _task/opsroot.json
           git -C _task rev-parse HEAD
+
+      - name: Show requested test context
+        run: |
+          echo "PR number: $PR_NUMBER"
+          echo "PR ref: $PR_REF"
+          echo "PR sha: $PR_SHA"
+          echo "Requested test tag: $TEST_TAG"
+          if [[ -n "$TEST_NAME" ]]; then
+            echo "Requested test name: $TEST_NAME"
+          fi
+          if [[ -n "$TEST_HASH" ]]; then
+            echo "Requested test hash: $TEST_HASH"
+          fi
 
       - name: Set OPS_ROOT
         run: echo "OPS_ROOT=$(pwd)/_task" >> "$GITHUB_ENV"
@@ -75,4 +90,4 @@ jobs:
           APIHOST: op://OpenServerless/TESTING/APIHOST
 
       - name: Run GitHub Test Suite
-        run: tests/run-gh-suite.sh $SELECTOR
+        run: tests/run-gh-suite.sh "$TEST_TAG"

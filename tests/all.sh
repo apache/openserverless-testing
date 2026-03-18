@@ -19,6 +19,14 @@
 resolve_test_selector "${1:?test selector}"
 TYPE="$TEST_SELECTOR"
 
+echo "*** requested tag: $TEST_TAG ***"
+echo "*** resolved test: $TEST_NAME -> $TEST_SELECTOR ***"
+echo "*** platform: $TEST_PLATFORM | arch: $TEST_ARCH ***"
+if test -n "$TEST_HASH"
+then
+    echo "*** commit hash: $TEST_HASH ***"
+fi
+
 # Always use the main OPS branch for the local all.sh sequence.
 export OPS_BRANCH=main
 echo "*** using $OPS_BRANCH ***"

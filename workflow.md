@@ -1,224 +1,221 @@
 # Workflow Notes
 
+Note:
+
+- this document describes both the historical state and the target contract
+- the branch `feat/test-tag-hash-contract` implements the `<test>-<hash>` trigger flow and clearer step-by-step test logging
+- references below to the earlier selector-style contract are kept only to explain the transition
+
 ## Repositories involved
 
 - `nuvolaris/openserverless-operator`
 - `nuvolaris/openserverless-task`
 - `nuvolaris/openserverless-testing`
 
-## Goal
+## Latest desired contract
 
-Enable a PR in `openserverless-operator` or `openserverless-task` to trigger the corresponding test workflow in `openserverless-testing`, using a PR label/tag shaped as:
+The latest specification says the trigger should be:
 
-- `<platform>-<architecture>`
+- `<test>-<hash>`
 
-Examples:
+Where:
 
-- `k3s-amd`
-- `k3s-arm`
-- `kind-amd`
+- `test` already includes the platform distinction
+- no extra platform or architecture field is needed
+- examples given are:
+  - `k3s`
+  - `k3sarm`
+- `hash` is the commit hash that generated the test
 
-## Current repositories and branches used during this analysis
+This is different from the earlier interpretation based on selectors like `k3s-amd` or `kind-amd`.
 
-Implementation work was pushed to:
+The key clarification is:
 
-- `feat/pr-tag-platform-arch-testing` in `openserverless-testing`
-- `feat/pr-tag-platform-arch-testing` in `openserverless-operator`
-- `feat/pr-tag-platform-arch-testing` in `openserverless-task`
+- platform is already part of the test name
+- there is no independent platform or architecture dimension to reconstruct later
 
 ## Important GitHub Actions behavior
 
 ### Why branch-only changes are not enough for end-to-end PR testing
 
-For the new PR-trigger flow:
+For PR-triggered flows:
 
 - source repos use `pull_request_target`
 - `pull_request_target` reads the workflow from the base branch of the PR
-- `repository_dispatch` workflows in `openserverless-testing` must also exist on the target branch used by GitHub
+- `repository_dispatch` workflows in `openserverless-testing` must also exist on the branch GitHub uses for the target repo
 
 Practical consequence:
 
-- opening a PR on `openserverless-operator` against `main` does not automatically use the new trigger logic if that logic only exists in the PR branch
-- the new flow becomes real only after the relevant workflow changes are available on the base branch, typically `main`
+- opening a PR against `main` does not automatically use workflow logic that exists only in the PR branch
+- the new behavior becomes real only after the relevant workflow changes are available on `main`
 
-Minimum merge set for real usage:
+## What was implemented during this work
 
-1. merge `openserverless-testing`
-2. merge `openserverless-operator`
-3. merge `openserverless-task` if task PRs must also trigger tests
+### Source repo triggers
 
-## Current testing flow before the new changes
+Feature branches added PR-trigger logic in:
+
+- `openserverless-operator/.github/workflows/trigger-testing.yaml`
+- `openserverless-task/.github/workflows/trigger-testing.yaml`
+
+Those changes currently enable testing from PR labels and dispatch to `openserverless-testing`.
+That behavior was enough to validate the PR-trigger pipeline, but its naming contract is still older than the final requirement.
+
+### Testing repo flows
+
+Feature branches added or updated:
+
+- `openserverless-testing/.github/workflows/operator-pr-test.yaml`
+- `openserverless-testing/.github/workflows/task-pr-test.yaml`
+- `openserverless-testing/.github/workflows/tests.yaml`
+
+Main improvements introduced:
+
+- deterministic checkout by `PR_SHA`
+- dedicated task PR workflow
+- common test sequence extraction
+- more consistent selector parsing than before
+- explicit `OPS_BRANCH=main` in the shared GitHub test path
+
+## Important note: current implementation vs latest specification
+
+The implemented PR-trigger flow was built around label values like:
+
+- `kind-amd`
+- `k3s-amd`
+- `k3s-arm`
+
+The latest specification instead says the tag should be:
+
+- `<test>-<hash>`
+
+Examples:
+
+- `k3s-<hash>`
+- `k3sarm-<hash>`
+
+So the code currently merged on `main` improved the trigger pipeline, but it is not yet fully aligned with this final naming contract.
+
+One important nuance:
+
+- the older tag-driven task path in `platform-ci-tests.yaml` is structurally closer to `<test>-<hash>`
+- the newer selector-based PR trigger improved orchestration and PR metadata handling, but uses the wrong external naming contract
+
+## Historical testing flow
 
 ### Operator
 
-Existing trigger path:
+Previous operator path:
 
 1. `openserverless-operator/.github/workflows/trigger-testing.yaml`
-2. trigger came from:
+2. trigger originally came from:
    - issue comment `/testing <platform>`
    - manual `workflow_dispatch`
-3. workflow collected:
-   - PR number
-   - PR ref
-   - PR sha
-   - source repo
-   - platform selector
-4. workflow dispatched `repository_dispatch` to `openserverless-testing`
-5. `openserverless-testing/.github/workflows/operator-pr-test.yaml` built a temporary operator image and executed tests
+3. workflow dispatched `repository_dispatch` to `openserverless-testing`
+4. `openserverless-testing/.github/workflows/operator-pr-test.yaml` built a temporary operator image and ran tests
 
 ### Task
 
-Existing trigger path:
+Previous task path:
 
-1. `openserverless-testing/.github/workflows/platform-ci-tests.yaml` could receive `repository_dispatch`
-2. it converted payload into a git tag
+1. `openserverless-testing/.github/workflows/platform-ci-tests.yaml` accepted `repository_dispatch`
+2. payload was converted into a git tag
 3. `openserverless-testing/.github/workflows/tests.yaml` ran tests on tag push
 
-Missing piece:
+Original missing piece:
 
-- `openserverless-task` had no `.github/workflows` directory, so there was no workflow producing that dispatch from a PR
+- `openserverless-task` did not have a workflow producer for that dispatch
 
-## New testing flow implemented in the feature branches
+What was already aligned in spirit:
 
-### Source of truth for enabling tests
+- `platform-ci-tests.yaml` already creates a tag from two parts
+- `tests.yaml` already accepts any tag matching `*-*`
+- this means the historical task path was already closer to a canonical `<test>-<hash>` trigger than the later `kind-amd` style label naming
 
-A PR label/tag matching one of these selectors enables the process:
+## Current code paths that are still useful under the new contract
 
-- `kind-amd`
-- `kind-arm`
+Even with the new `<test>-<hash>` specification, these pieces remain useful:
+
+- `openserverless-testing/.github/workflows/operator-pr-test.yaml`
+  Purpose:
+  checkout operator PR by SHA, build temporary image, run tests
+- `openserverless-testing/.github/workflows/task-pr-test.yaml`
+  Purpose:
+  checkout task PR by SHA and run tests from the requested PR contents
+- `openserverless-testing/.github/workflows/tests.yaml`
+  Purpose:
+  generic tag-based test entry point for `*-*`
+- `openserverless-testing/tests/run-gh-suite.sh`
+  Purpose:
+  central GitHub test sequence
+
+## What needs realignment for the latest specification
+
+### 1. Trigger naming
+
+The system must treat the tag as:
+
+- `<test>-<hash>`
+
+Not as:
+
+- `<platform>-<architecture>`
+
+### 2. Canonical test names
+
+The system needs one stable list of accepted test names.
+
+Examples currently mentioned by the latest clarification:
+
+- `k3s`
+- `k3sarm`
+
+That means the code should not rely on split forms like:
+
 - `k3s-amd`
 - `k3s-arm`
-- `k8s-amd`
-- `k8s-arm`
-- `mk8s-amd`
-- `mk8s-arm`
-- `eks-amd`
-- `eks-arm`
-- `aks-amd`
-- `aks-arm`
-- `gke-amd`
-- `gke-arm`
-- `osh-amd`
-- `osh-arm`
 
-### Operator flow after the feature changes
+unless those remain officially supported aliases.
 
-Files:
+### 3. Parser behavior
 
-- `openserverless-operator/.github/workflows/trigger-testing.yaml`
-- `openserverless-testing/.github/workflows/operator-pr-test.yaml`
+Parsing should extract:
 
-Flow:
+- `test`
+- `hash`
 
-1. PR in `openserverless-operator` receives a valid label
-2. `pull_request_target` runs on:
-   - `labeled`
-   - `synchronize`
-   - `reopened`
-3. workflow scans PR labels and picks the first valid `<platform>-<architecture>` selector
-4. workflow fetches PR details via `gh api`
-5. workflow dispatches `operator-pr-test` to `openserverless-testing`
-6. testing workflow clones the operator PR branch
-7. testing workflow explicitly checks out the requested `PR_SHA`
-8. testing workflow builds a temporary operator image
-9. testing workflow patches `opsroot.json`
-10. testing workflow runs the test suite on the selected infrastructure
+The earlier selector parser was built for names that embedded an extra `-amd` or `-arm` part.
 
-### Task flow after the feature changes
+### 4. Mapping from test name to infrastructure
 
-Files:
+Because platform is already encoded in the test name, the test runner should map:
 
-- `openserverless-task/.github/workflows/trigger-testing.yaml`
-- `openserverless-testing/.github/workflows/task-pr-test.yaml`
+- `k3s` -> the corresponding infrastructure path
+- `k3sarm` -> the corresponding infrastructure path
 
-Flow:
+instead of reconstructing platform and architecture as separate dimensions.
 
-1. PR in `openserverless-task` receives a valid label
-2. `pull_request_target` runs on:
-   - `labeled`
-   - `synchronize`
-   - `reopened`
-3. workflow scans PR labels and picks the first valid selector
-4. workflow fetches PR details via `gh api`
-5. workflow dispatches `task-pr-test` to `openserverless-testing`
-6. testing workflow clones the task PR branch
-7. testing workflow explicitly checks out the requested `PR_SHA`
-8. testing workflow sets `OPS_ROOT` to the checked out task tree
-9. testing workflow runs the test suite on the selected infrastructure
+### 5. Workflow payload naming
 
-## Changes made in `openserverless-testing`
+Even where behavior is already close, workflow fields should stop implying a separate platform dimension.
 
-### New workflows
+Examples of terminology that should be renamed in the next code alignment:
 
-- `./.github/workflows/task-pr-test.yaml`
+- `platform` -> `test`
+- selector -> tag or test selector only if it really means `<test>-<hash>`
 
-Purpose:
+## Current deploy/test support in `openserverless-testing`
 
-- dedicated repository-dispatch workflow for PR testing of `openserverless-task`
-
-### Updated workflows
-
-- `./.github/workflows/operator-pr-test.yaml`
-- `./.github/workflows/tests.yaml`
-
-Main updates:
-
-- operator PR testing now checks out the exact requested SHA
-- common test execution is centralized through `tests/run-gh-suite.sh`
-- selector is passed consistently as one input to the suite
-
-### New selector normalization
-
-Files:
-
-- `./tests/lib/selector.sh`
-- `./tests/run-gh-suite.sh`
-
-Purpose:
-
-- normalize `<platform>-<architecture>` once
-- preserve distinctions like `k3s-amd` vs `k3s-arm`
-- remove inconsistent parsing scattered across test scripts
-
-### Test scripts updated to use shared selector parsing
-
-Updated:
-
-- `./tests/1-deploy.sh`
-- `./tests/2-ssl.sh`
-- `./tests/6-login.sh`
-- `./tests/7-static.sh`
-- `./tests/8-user-redis.sh`
-- `./tests/9a-user-ferretdb.sh`
-- `./tests/9b-user-postgres.sh`
-- `./tests/10-user-minio.sh`
-- `./tests/12-nuv-mac.sh`
-- `./tests/14-runtime-testing.sh`
-- `./tests/all.sh`
-
-Why this mattered:
-
-- before the change, many scripts reduced `k3s-amd` and `k3s-arm` to `k3s`
-- deploy logic distinguished them, but later test steps did not preserve the selector consistently
-
-## Current deploy/test platform support in `openserverless-testing`
-
-Effective support in `tests/1-deploy.sh`:
+Current deploy logic is still based on names such as:
 
 - `kind`
 - `k3s-amd`
 - `k3s-arm`
 - `k8s`
 
-Present but commented out in deploy path:
+This is one of the main remaining mismatches with the latest desired naming.
 
-- `mk8s`
-- `eks`
-- `aks`
-- `gke`
-- `osh`
-
-This means the label set is broader than the currently active deploy implementation. Some selectors are accepted by workflow validation, but their deploy path still depends on commented or incomplete code in `tests/1-deploy.sh`.
+The current deploy logic therefore supports the infrastructure execution, but not yet the final canonical naming expected by the new contract.
 
 ## Operator image build and publication
 
@@ -231,15 +228,16 @@ File:
 What happens:
 
 1. testing workflow clones the operator PR
-2. builds an image from the PR source
-3. pushes it to GHCR as a temporary test image
-4. patches the task configuration to use that image during tests
+2. checks out the requested `PR_SHA`
+3. builds an image from the PR source
+4. pushes it to GHCR as a temporary test image
+5. patches the task configuration to use that image during tests
 
 Destination:
 
 - `ghcr.io/<repository_owner>/openserverless-testing:pr-<PR_NUMBER>-<SHORT_SHA>`
 
-This is a testing image, not the official published operator image.
+This is only the test image.
 
 ### Official operator image publication
 
@@ -255,8 +253,8 @@ Trigger:
 
 Important conclusion:
 
-- there is currently no automatic path from “PR tests passed” to “publish official operator image”
-- publication depends on a tag push
+- there is no automatic path today from “PR tests passed” to “publish official operator image”
+- official publication still depends on pushing a release tag
 
 ### Where the official operator image is published
 
@@ -282,7 +280,7 @@ Actual push implementation:
 
 There is no workflow that automatically creates the release tag after tests or after merge.
 
-Current tag creation is manual or task-driven:
+Current tag creation remains manual or task-driven:
 
 - `openserverless-operator/Taskfile.yml` task `tag`
 - `openserverless-operator/Taskfile.yml` task `tag-commit-push`
@@ -291,41 +289,61 @@ So the current release path is:
 
 1. someone creates or pushes a numeric version tag
 2. tag push triggers `image.yml`
-3. `image.yml` runs tests/build and then publishes the official image
+3. `image.yml` builds and publishes the official image
 
 ## Validation performed during implementation
 
-Static checks executed:
+Static checks executed during the implementation work:
 
 - `bash -n` on updated shell scripts in `openserverless-testing`
 - YAML parsing with Ruby for modified workflows in all three repositories
-- quick selector parsing checks for:
-  - `kind-amd`
-  - `k3s-arm`
-  - `k8s-arm`
+- a real trigger validation using:
+  - an operator PR
+  - label `kind-amd`
+  - successful dispatch into `openserverless-testing`
 
-Not executed:
+That real validation confirmed:
 
-- full end-to-end GitHub Actions run on live PRs
-- real registry publication test for the final operator release image
+- the PR-trigger pipeline works
+- `repository_dispatch` reaches `openserverless-testing`
+- the operator PR test workflow starts correctly
+
+But it validated the selector-style contract, not yet the final `<test>-<hash>` contract.
 
 ## Open points
 
-### 1. Label naming
+### 1. Exact meaning of “tag”
 
-The implementation assumes GitHub PR labels are the “tag” mentioned in the process description.
+The latest requirement uses the word “tag” as:
 
-### 2. Multiple valid labels on the same PR
+- `<test>-<hash>`
 
-Current logic picks the first matching valid selector found on the PR.
+This should now become the canonical name everywhere in code and docs.
 
-### 3. Release automation
+### 2. Transition plan
 
-If desired, a future improvement could connect:
+There are now two conceptual layers:
 
-- PR test success
-- merge to `main`
-- release tag creation
-- official image publication
+- trigger pipeline improvements already implemented and merged
+- final naming contract `<test>-<hash>` still to be aligned
 
-Today these are still separate processes.
+### 3. Next update needed in code
+
+To fully align the codebase, the next round should update:
+
+- trigger parsing
+- validation rules
+- test-name allowlists
+- deploy mapping
+- workflow payload field names
+- documentation
+
+so everything consistently speaks in terms of:
+
+- `test`
+- `hash`
+
+and no longer in terms of:
+
+- platform
+- architecture
