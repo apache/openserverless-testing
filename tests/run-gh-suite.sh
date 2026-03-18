@@ -5,6 +5,9 @@ SELECTOR="${1:?test selector}"
 
 cd "$(dirname "$0")"
 
+export OPS_BRANCH=main
+echo "*** using $OPS_BRANCH ***"
+
 touch ../.secrets
 
 ./1-deploy.sh "$SELECTOR"

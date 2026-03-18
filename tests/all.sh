@@ -19,8 +19,8 @@
 resolve_test_selector "${1:?test selector}"
 TYPE="$TEST_SELECTOR"
 
-# Use OPS_BRANCH from environment if set, otherwise default to main
-export OPS_BRANCH="${OPS_BRANCH:-main}"
+# Always use the main OPS branch for the local all.sh sequence.
+export OPS_BRANCH=main
 echo "*** using $OPS_BRANCH ***"
 
 # if type not in (kind, k3s, mk8s, aks, eks, gke) exit

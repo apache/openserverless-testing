@@ -28,6 +28,7 @@ env:
   PR_SHA: ${{ github.event.client_payload.pr_sha }}
   TASK_REPO: ${{ github.event.client_payload.task_repo }}
   SELECTOR: ${{ github.event.client_payload.selector || github.event.client_payload.platform }}
+  OPS_BRANCH: main
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
 
 jobs:

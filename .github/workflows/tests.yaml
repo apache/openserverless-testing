@@ -26,7 +26,7 @@ on:
 env:
   PLATFORM: ${{ github.ref_name }}
   OPS_REPO: ${{ vars.OPS_REPO || 'https://github.com/apache/openserverless-task' }}
-  OPS_BRANCH: ${{ vars.OPS_BRANCH || 'main' }}
+  OPS_BRANCH: main
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
 
 jobs:

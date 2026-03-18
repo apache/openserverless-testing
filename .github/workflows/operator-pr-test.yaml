@@ -28,6 +28,7 @@ env:
   PR_SHA: ${{ github.event.client_payload.pr_sha }}
   OPERATOR_REPO: ${{ github.event.client_payload.operator_repo }}
   SELECTOR: ${{ github.event.client_payload.selector || github.event.client_payload.platform }}
+  OPS_BRANCH: main
   OPERATOR_IMAGE: ghcr.io/${{ github.repository_owner }}/openserverless-testing
 
   NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
