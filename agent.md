@@ -251,3 +251,32 @@
 - For the `nuvolaris` work resumed after the Apache release steps, commits and pushes were switched back to the user's account/key:
   - SSH key: `~/.ssh/id_ed25519`
   - Git email restored to `miki3421@gmail.com` in the operator PR clone before committing the submodule bump
+
+## 2026-03-19 Ops Trace Visibility
+
+### Goal
+
+- Make the GitHub `k3s` test runs show the `ops` shell invocations in clear.
+- Keep a small local trace on the remote `k3s` server so deploy-time `ops setup server ...` calls can be correlated with server-side state.
+
+### Changes made
+
+- In `openserverless-testing/tests/run-gh-suite.sh`:
+  - enabled tracing by default with:
+    - `OPS_TRACE=1`
+    - `K3S_SERVER_TRACE=1`
+  - changed step execution so shell scripts run through `bash -x` when tracing is enabled
+- In `openserverless-testing/tests/1-deploy.sh`:
+  - added `run_logged` to print the exact top-level `ops ...` command before execution
+  - added `append_remote_trace` to append timestamped entries to:
+    - `/var/log/openserverless-testing/ops-trace.log`
+    - on the remote `k3s` server
+  - wired that trace around the deploy-time `ops config apihost` and `ops setup server ...` calls for:
+    - `k3s-amd`
+    - `k3s-arm`
+
+### Expected effect on the next rerun
+
+- GitHub Actions logs will show the shell-expanded test scripts and their `ops` invocations.
+- The remote server should accumulate a lightweight trace file at:
+  - `/var/log/openserverless-testing/ops-trace.log`

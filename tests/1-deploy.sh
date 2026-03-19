@@ -39,13 +39,44 @@ fi
 export PREFL_NO_CPU_CHECK=true
 export PREFL_NO_MEM_CHECK=true
 
+run_logged() {
+    printf '+ '
+    printf '%q ' "$@"
+    printf '\n'
+    "$@"
+}
+
+append_remote_trace() {
+    local host="${1:-}"
+    shift || true
+    local message="$*"
+    local remote_user="${SSH_USER:-root}"
+    local remote_log="${K3S_SERVER_TRACE_LOG:-/var/log/openserverless-testing/ops-trace.log}"
+    local remote_dir
+    local timestamp
+    local escaped
+
+    if test "${K3S_SERVER_TRACE:-0}" != "1" || test -z "$host"
+    then
+        return 0
+    fi
+
+    remote_dir="$(dirname "$remote_log")"
+    timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+    escaped="$(printf "%s" "$message" | sed "s/'/'\\\\''/g")"
+
+    ssh -oBatchMode=yes -oStrictHostKeyChecking=no "${remote_user}@${host}" \
+        "sudo mkdir -p '$remote_dir' && printf '%s %s\n' '$timestamp' '$escaped' | sudo tee -a '$remote_log' >/dev/null" \
+        || echo "WARNING: unable to append remote trace on $host" >&2
+}
+
 # actual setup
 case "$TYPE" in
 kind)
     # create vm with docker
-    ops config reset
-    ops setup devcluster --uninstall
-    ops setup devcluster
+    run_logged ops config reset
+    run_logged ops setup devcluster --uninstall
+    run_logged ops setup devcluster
     ;;
 k3s-amd)
     # single AMD VM with k3s installed via ops setup server
@@ -73,12 +104,17 @@ k3s-amd)
     fi
     export K3S_AUTOSSH_LOCAL_PORT="${K3S_AUTOSSH_LOCAL_PORT:-16443}"
     export K3S_AUTOSSH_REMOTE_PORT="${K3S_AUTOSSH_REMOTE_PORT:-6443}"
-    ops config apihost "$K3S_AMD_APIHOST"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "BEGIN deploy selector=$TYPE apihost=$K3S_AMD_APIHOST ssh_host=$K3S_AMD_SSH_HOST autossh=$K3S_AUTOSSH"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "ops config apihost $K3S_AMD_APIHOST"
+    run_logged ops config apihost "$K3S_AMD_APIHOST"
     echo "Using k3s-amd API host: $K3S_AMD_APIHOST"
     echo "Using k3s-amd SSH host: $K3S_AMD_SSH_HOST"
     # install cluster via the SSH host, optionally using an autossh kube-apiserver tunnel
-    ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}" --uninstall
-    ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "ops setup server $K3S_AMD_SSH_HOST ${SSH_USER:-root} --uninstall"
+    run_logged ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}" --uninstall
+    append_remote_trace "$K3S_AMD_SSH_HOST" "ops setup server $K3S_AMD_SSH_HOST ${SSH_USER:-root}"
+    run_logged ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "END deploy selector=$TYPE"
     ;;
 k3s-arm)
     # single ARM VM with k3s installed via ops setup server
@@ -98,12 +134,17 @@ k3s-arm)
     fi
     export K3S_AUTOSSH_LOCAL_PORT="${K3S_AUTOSSH_LOCAL_PORT:-26443}"
     export K3S_AUTOSSH_REMOTE_PORT="${K3S_AUTOSSH_REMOTE_PORT:-6443}"
-    ops config apihost "$K3S_ARM_APIHOST"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "BEGIN deploy selector=$TYPE apihost=$K3S_ARM_APIHOST ssh_host=$K3S_ARM_SSH_HOST autossh=$K3S_AUTOSSH"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "ops config apihost $K3S_ARM_APIHOST"
+    run_logged ops config apihost "$K3S_ARM_APIHOST"
     echo "Using k3s-arm API host: $K3S_ARM_APIHOST"
     echo "Using k3s-arm SSH host: $K3S_ARM_SSH_HOST"
     # install cluster via the SSH host, optionally using an autossh kube-apiserver tunnel
-    ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}" --uninstall
-    ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "ops setup server $K3S_ARM_SSH_HOST ${SSH_USER:-root} --uninstall"
+    run_logged ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}" --uninstall
+    append_remote_trace "$K3S_ARM_SSH_HOST" "ops setup server $K3S_ARM_SSH_HOST ${SSH_USER:-root}"
+    run_logged ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "END deploy selector=$TYPE"
     ;;
 
 # ---------------------------------------------------------------

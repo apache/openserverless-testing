@@ -9,10 +9,13 @@ cd "$(dirname "$0")"
 resolve_test_selector "$TEST_INPUT"
 
 export OPS_BRANCH=main
+export OPS_TRACE="${OPS_TRACE:-1}"
+export K3S_SERVER_TRACE="${K3S_SERVER_TRACE:-1}"
 echo "*** using $OPS_BRANCH ***"
 echo "*** requested tag: $TEST_TAG ***"
 echo "*** resolved test: $TEST_NAME -> $TEST_SELECTOR ***"
 echo "*** platform: $TEST_PLATFORM | arch: $TEST_ARCH ***"
+echo "*** ops trace: $OPS_TRACE | k3s server trace: $K3S_SERVER_TRACE ***"
 if test -n "$TEST_HASH"
 then
     echo "*** commit hash: $TEST_HASH ***"
@@ -29,7 +32,12 @@ run_step() {
     printf '\n[%s] START %s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$label"
 
     set +e
-    "$@"
+    if test "${OPS_TRACE:-0}" = "1" && test -f "$1"
+    then
+        bash -x "$@"
+    else
+        "$@"
+    fi
     status=$?
     set -e
 
