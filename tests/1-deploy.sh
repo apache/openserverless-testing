@@ -51,29 +51,59 @@ k3s-amd)
     # single AMD VM with k3s installed via ops setup server
     ops config reset
     K3S_AMD_APIHOST="${K3S_AMD_APIHOST:-${APIHOST:-api.k3s-amd.opstest.top}}"
+    if test -n "$K3S_AMD_SSH_HOST"
+    then
+        :
+    elif test "$K3S_AMD_APIHOST" = "testing.nuvolaris.dev"
+    then
+        K3S_AMD_SSH_HOST="testing1-k3s-amd.nuvolaris.dev"
+    else
+        K3S_AMD_SSH_HOST="$K3S_AMD_APIHOST"
+    fi
     if test -z "$K3S_AMD_APIHOST"
     then
         echo "ERROR: K3S_AMD_APIHOST is required"
         exit 1
     fi
+    export K3S_SSH_HOST="$K3S_AMD_SSH_HOST"
+    export K3S_AUTOSSH="${K3S_AUTOSSH:-0}"
+    if test "$K3S_AMD_SSH_HOST" != "$K3S_AMD_APIHOST"
+    then
+        export K3S_AUTOSSH=1
+    fi
+    export K3S_AUTOSSH_LOCAL_PORT="${K3S_AUTOSSH_LOCAL_PORT:-16443}"
+    export K3S_AUTOSSH_REMOTE_PORT="${K3S_AUTOSSH_REMOTE_PORT:-6443}"
     ops config apihost "$K3S_AMD_APIHOST"
-    # install cluster (SSH via DNS hostname)
-    ops setup server "$K3S_AMD_APIHOST" "${SSH_USER:-root}" --uninstall
-    ops setup server "$K3S_AMD_APIHOST" "${SSH_USER:-root}"
+    echo "Using k3s-amd API host: $K3S_AMD_APIHOST"
+    echo "Using k3s-amd SSH host: $K3S_AMD_SSH_HOST"
+    # install cluster via the SSH host, optionally using an autossh kube-apiserver tunnel
+    ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}" --uninstall
+    ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
     ;;
 k3s-arm)
     # single ARM VM with k3s installed via ops setup server
     ops config reset
     K3S_ARM_APIHOST="${K3S_ARM_APIHOST:-${APIHOST:-api.k3s-arm.opstest.top}}"
+    K3S_ARM_SSH_HOST="${K3S_ARM_SSH_HOST:-$K3S_ARM_APIHOST}"
     if test -z "$K3S_ARM_APIHOST"
     then
         echo "ERROR: K3S_ARM_APIHOST is required"
         exit 1
     fi
+    export K3S_SSH_HOST="$K3S_ARM_SSH_HOST"
+    export K3S_AUTOSSH="${K3S_AUTOSSH:-0}"
+    if test "$K3S_ARM_SSH_HOST" != "$K3S_ARM_APIHOST"
+    then
+        export K3S_AUTOSSH=1
+    fi
+    export K3S_AUTOSSH_LOCAL_PORT="${K3S_AUTOSSH_LOCAL_PORT:-26443}"
+    export K3S_AUTOSSH_REMOTE_PORT="${K3S_AUTOSSH_REMOTE_PORT:-6443}"
     ops config apihost "$K3S_ARM_APIHOST"
-    # install cluster (SSH via DNS hostname)
-    ops setup server "$K3S_ARM_APIHOST" "${SSH_USER:-root}" --uninstall
-    ops setup server "$K3S_ARM_APIHOST" "${SSH_USER:-root}"
+    echo "Using k3s-arm API host: $K3S_ARM_APIHOST"
+    echo "Using k3s-arm SSH host: $K3S_ARM_SSH_HOST"
+    # install cluster via the SSH host, optionally using an autossh kube-apiserver tunnel
+    ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}" --uninstall
+    ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
     ;;
 
 # ---------------------------------------------------------------

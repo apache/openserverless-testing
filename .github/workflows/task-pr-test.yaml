@@ -74,6 +74,11 @@ jobs:
           ops -info
           ops -t > /dev/null
 
+      - name: Install autossh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autossh
+
       - name: Load secrets from 1Password
         uses: 1password/load-secrets-action@v2
         with:
