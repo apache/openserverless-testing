@@ -339,3 +339,40 @@
 
 - The PR trigger regex in `openserverless-operator` / `openserverless-task` still needs the same naming expansion if the new canonical labels with hash are to be used directly on PRs.
 - The current active `k3s-amd` label continues to work because the testing repo maps it to the `slim` profile.
+
+## 2026-03-19 Traefik RBAC And Operator Login Follow-Up
+
+### Traefik RBAC root cause
+
+- The Traefik CRD PR on `openserverless-operator` updated the templates and operator-side RBAC to `traefik.io`.
+- The real cluster RBAC applied by `ops setup cluster` still came from `openserverless-task`, where:
+  - `setup/kubernetes/roles/operator-roles.yaml`
+  - was still using `traefik.containo.us`
+- This mismatch caused the runtime error:
+  - `middlewares.traefik.io ... is forbidden`
+
+### Traefik RBAC fix
+
+- `nuvolaris/openserverless-task:main` was updated so the cluster setup role now grants access to:
+  - `apiGroups: ["traefik.io"]`
+- The `openserverless-operator` PR branch was then updated to point its `olaris` submodule to that fixed task commit.
+
+### New failure observed after that
+
+- On the remote `k3s-amd` cluster, the operator pod started crashing with:
+  - `kopf._cogs.structs.credentials.LoginError: Ran out of valid credentials`
+- The failing pod was:
+  - `nuvolaris-operator-0`
+- The image under test was:
+  - `ghcr.io/nuvolaris/openserverless-testing:pr-5-9930992`
+
+### Authentication fix prepared on the PR branch
+
+- In `openserverless-operator/nuvolaris/main.py`, the `@kopf.on.login()` handler was hardened for in-cluster execution.
+- Instead of using only:
+  - `kopf.login_via_pykube(...)`
+- it now tries these handlers in order when a service-account token exists:
+  - `kopf.login_with_service_account(...)`
+  - `kopf.login_via_client(...)`
+  - `kopf.login_via_pykube(...)`
+- The handler now logs which method returned credentials and raises a clearer error if all of them fail.
