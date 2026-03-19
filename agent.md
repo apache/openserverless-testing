@@ -280,3 +280,24 @@
 - GitHub Actions logs will show the shell-expanded test scripts and their `ops` invocations.
 - The remote server should accumulate a lightweight trace file at:
   - `/var/log/openserverless-testing/ops-trace.log`
+
+## 2026-03-19 K3s Test Sequence Correction
+
+### Problem found
+
+- The `k3s` path in `openserverless-testing/tests/1-deploy.sh` was still using:
+  - `ops setup server ... --uninstall`
+  - `ops setup server ...`
+- This wrapper sequence was not the one the user validated manually for the remote `k3s` environment.
+
+### Sequence aligned in the test flow
+
+- The `k3s-amd` and `k3s-arm` branches now use this direct sequence instead:
+  - `ops cloud k3s delete <server> <user>`
+  - `ops config apihost <apihost>`
+  - `ops cloud k3s create <server> <user>`
+  - `ops setup cluster`
+
+### Reason for the change
+
+- This keeps the GitHub test path aligned with the lower-level `ops cloud k3s` workflow rather than the higher-level `ops setup server` wrapper.

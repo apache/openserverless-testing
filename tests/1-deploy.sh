@@ -110,10 +110,12 @@ k3s-amd)
     echo "Using k3s-amd API host: $K3S_AMD_APIHOST"
     echo "Using k3s-amd SSH host: $K3S_AMD_SSH_HOST"
     # install cluster via the SSH host, optionally using an autossh kube-apiserver tunnel
-    append_remote_trace "$K3S_AMD_SSH_HOST" "ops setup server $K3S_AMD_SSH_HOST ${SSH_USER:-root} --uninstall"
-    run_logged ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}" --uninstall
-    append_remote_trace "$K3S_AMD_SSH_HOST" "ops setup server $K3S_AMD_SSH_HOST ${SSH_USER:-root}"
-    run_logged ops setup server "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "ops cloud k3s delete $K3S_AMD_SSH_HOST ${SSH_USER:-root}"
+    run_logged ops cloud k3s delete "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "ops cloud k3s create $K3S_AMD_SSH_HOST ${SSH_USER:-root}"
+    run_logged ops cloud k3s create "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_AMD_SSH_HOST" "ops setup cluster"
+    run_logged ops setup cluster
     append_remote_trace "$K3S_AMD_SSH_HOST" "END deploy selector=$TYPE"
     ;;
 k3s-arm)
@@ -140,10 +142,12 @@ k3s-arm)
     echo "Using k3s-arm API host: $K3S_ARM_APIHOST"
     echo "Using k3s-arm SSH host: $K3S_ARM_SSH_HOST"
     # install cluster via the SSH host, optionally using an autossh kube-apiserver tunnel
-    append_remote_trace "$K3S_ARM_SSH_HOST" "ops setup server $K3S_ARM_SSH_HOST ${SSH_USER:-root} --uninstall"
-    run_logged ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}" --uninstall
-    append_remote_trace "$K3S_ARM_SSH_HOST" "ops setup server $K3S_ARM_SSH_HOST ${SSH_USER:-root}"
-    run_logged ops setup server "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "ops cloud k3s delete $K3S_ARM_SSH_HOST ${SSH_USER:-root}"
+    run_logged ops cloud k3s delete "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "ops cloud k3s create $K3S_ARM_SSH_HOST ${SSH_USER:-root}"
+    run_logged ops cloud k3s create "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
+    append_remote_trace "$K3S_ARM_SSH_HOST" "ops setup cluster"
+    run_logged ops setup cluster
     append_remote_trace "$K3S_ARM_SSH_HOST" "END deploy selector=$TYPE"
     ;;
 
