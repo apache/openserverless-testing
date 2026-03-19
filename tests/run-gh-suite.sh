@@ -5,7 +5,7 @@ TEST_INPUT="${1:?test selector}"
 
 cd "$(dirname "$0")"
 
-. "$(dirname "$0")/lib/selector.sh"
+. ./lib/selector.sh
 resolve_test_selector "$TEST_INPUT"
 
 export OPS_BRANCH=main
