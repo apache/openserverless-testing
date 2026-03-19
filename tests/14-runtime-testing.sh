@@ -19,6 +19,9 @@
 resolve_test_selector "${1:?test selector}"
 TYPE="$TEST_SELECTOR"
 PROFILE="${TEST_PROFILE:-full}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+MANIFEST_PATH="${REPO_ROOT}/test-runtimes/manifest.yaml"
 
 user="testactionuser"
 password=$(ops -random --str 12)
@@ -66,9 +69,7 @@ if [ "$PROFILE" = "full" ]; then
     export S3_BUCKET_STATIC=$(ops -config S3_BUCKET_STATIC)
 fi
 
-PWD=$(pwd)
-
-if ops -wsk project deploy --manifest ${PWD}/test-runtimes/manifest.yaml | grep Success
+if ops -wsk project deploy --manifest "${MANIFEST_PATH}" | grep Success
 then echo SUCCESS DEPLOY PROJECT;
 else echo FAIL DEPLOY PROJECT; exit 1 
 fi

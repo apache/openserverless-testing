@@ -376,3 +376,18 @@
   - `kopf.login_via_client(...)`
   - `kopf.login_via_pykube(...)`
 - The handler now logs which method returned credentials and raises a clearer error if all of them fail.
+
+### Follow-up failure in the runtime suite
+
+- After the operator auth fix, the `k3s-amd` run progressed through deploy, Redis, FerretDB, and Postgres checks.
+- The next failure was no longer Traefik-related. It came from `tests/14-runtime-testing.sh`, where:
+  - `ops -wsk project deploy --manifest ${PWD}/test-runtimes/manifest.yaml`
+  - resolved to `tests/test-runtimes/manifest.yaml`
+  - even though the real file lives at:
+    - `test-runtimes/manifest.yaml`
+
+### Runtime suite fix
+
+- `tests/14-runtime-testing.sh` now derives the repository root from the script location and uses:
+  - `${REPO_ROOT}/test-runtimes/manifest.yaml`
+- This makes the manifest lookup independent from the shell's current working directory.
