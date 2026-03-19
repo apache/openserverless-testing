@@ -296,6 +296,7 @@
   - `ops cloud k3s delete <server> <user>`
   - `ops config apihost <apihost>`
   - `ops cloud k3s create <server> <user>`
+  - `ops config slim`
   - `ops setup cluster`
 
 ### Reason for the change
