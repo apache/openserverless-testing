@@ -18,11 +18,17 @@
 . "$(dirname "$0")/lib/selector.sh"
 resolve_test_selector "${1:?test selector}"
 TYPE="$TEST_SELECTOR"
+PROFILE="${TEST_PROFILE:-full}"
 
 user="testactionuser"
 password=$(ops -random --str 12)
+USER_FLAGS="--redis --mongodb --postgres"
 
-if ops admin adduser $user $user@email.com $password --minio --redis --mongodb --postgres | grep "whiskuser.nuvolaris.org/$user created"
+if [ "$PROFILE" = "full" ]; then
+    USER_FLAGS="$USER_FLAGS --minio"
+fi
+
+if ops admin adduser $user $user@email.com $password $USER_FLAGS | grep "whiskuser.nuvolaris.org/$user created"
 then echo SUCCESS CREATING $user
 else echo FAIL CREATING $user; exit 1 
 fi
@@ -45,17 +51,20 @@ case "$TYPE" in
     ;;    
 esac
 
-export S3_ACCESS_KEY=$(ops -config S3_ACCESS_KEY)
-export S3_SECRET_KEY=$(ops -config S3_SECRET_KEY)
-export S3_HOST=$(ops -config S3_HOST)
-export S3_PORT=$(ops -config S3_PORT)
-export S3_BUCKET_DATA=$(ops -config S3_BUCKET_DATA)
-export S3_BUCKET_STATIC=$(ops -config S3_BUCKET_STATIC)
 export REDIS_URL=$(ops -config REDIS_URL)
 export REDIS_PREFIX=$(ops -config REDIS_PREFIX)
 export MONGODB_URL=$(ops -config MONGODB_URL)
 export MONGODB_DB=$user
 export POSTGRES_URL=$(ops -config POSTGRES_URL)
+
+if [ "$PROFILE" = "full" ]; then
+    export S3_ACCESS_KEY=$(ops -config S3_ACCESS_KEY)
+    export S3_SECRET_KEY=$(ops -config S3_SECRET_KEY)
+    export S3_HOST=$(ops -config S3_HOST)
+    export S3_PORT=$(ops -config S3_PORT)
+    export S3_BUCKET_DATA=$(ops -config S3_BUCKET_DATA)
+    export S3_BUCKET_STATIC=$(ops -config S3_BUCKET_STATIC)
+fi
 
 PWD=$(pwd)
 
@@ -84,9 +93,13 @@ then echo SUCCESS JS POSTGRES;
 else echo FAIL JS POSTGRES; exit 1 
 fi
 
-if ops -wsk action invoke javascript/minio -r| grep "$user-data"
-then echo SUCCESS JS MINIO; 
-else echo FAIL JS MINIO; exit 1 
+if [ "$PROFILE" = "full" ]; then
+    if ops -wsk action invoke javascript/minio -r| grep "$user-data"
+    then echo SUCCESS JS MINIO;
+    else echo FAIL JS MINIO; exit 1
+    fi
+else
+    echo SKIP JS MINIO FOR "$PROFILE"
 fi
 
 if ops -wsk action invoke python/hello -r| grep world
@@ -109,7 +122,12 @@ then echo SUCCESS PYTHON POSTGRES;
 else echo FAIL PYTHON POSTGRES; exit 1
 fi
 
-if ops -wsk action invoke python/minio -r| grep "$user-data"
-then echo SUCCESS PYTHON MINIO; exit 0
-else echo FAIL PYTHON MINIO; exit 1
+if [ "$PROFILE" = "full" ]; then
+    if ops -wsk action invoke python/minio -r| grep "$user-data"
+    then echo SUCCESS PYTHON MINIO; exit 0
+    else echo FAIL PYTHON MINIO; exit 1
+    fi
+else
+    echo SKIP PYTHON MINIO FOR "$PROFILE"
+    exit 0
 fi

@@ -302,3 +302,40 @@
 ### Reason for the change
 
 - This keeps the GitHub test path aligned with the lower-level `ops cloud k3s` workflow rather than the higher-level `ops setup server` wrapper.
+
+## 2026-03-19 K3s Slim And Full Test Profiles
+
+### Goal
+
+- Split the current `k3s` path into two logical suites:
+  - `k3s-amd-slim` / `k3s-arm-slim`
+  - `k3s-amd-full` / `k3s-arm-full`
+- Keep temporary compatibility with older aliases:
+  - `k3s-amd`
+  - `k3s-arm`
+  - these currently resolve to the `slim` profile
+
+### Changes made in `openserverless-testing`
+
+- `tests/lib/selector.sh`
+  - now accepts test names with embedded hyphens before the final `<hash>`
+  - exports `TEST_PROFILE`
+  - maps:
+    - `k3s-amd-slim` -> `k3s-amd` + `slim`
+    - `k3s-amd-full` -> `k3s-amd` + `full`
+    - `k3s-arm-slim` -> `k3s-arm` + `slim`
+    - `k3s-arm-full` -> `k3s-arm` + `full`
+- `tests/1-deploy.sh`
+  - only runs `ops config slim` when `TEST_PROFILE=slim`
+- `tests/run-gh-suite.sh`
+  - skips MinIO-specific and static steps for `slim`
+- `tests/all.sh`
+  - mirrors the same `slim` skips for local all-in-one runs
+- `tests/14-runtime-testing.sh`
+  - no longer requires MinIO for `slim`
+  - skips JS/Python MinIO runtime assertions in `slim`
+
+### Current limitation
+
+- The PR trigger regex in `openserverless-operator` / `openserverless-task` still needs the same naming expansion if the new canonical labels with hash are to be used directly on PRs.
+- The current active `k3s-amd` label continues to work because the testing repo maps it to the `slim` profile.

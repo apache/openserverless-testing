@@ -18,10 +18,12 @@
 . "$(dirname "$0")/lib/selector.sh"
 resolve_test_selector "${1:?test selector}"
 TYPE="$TEST_SELECTOR"
+PROFILE="${TEST_PROFILE:-full}"
 
 echo "*** requested tag: $TEST_TAG ***"
 echo "*** resolved test: $TEST_NAME -> $TEST_SELECTOR ***"
 echo "*** platform: $TEST_PLATFORM | arch: $TEST_ARCH ***"
+echo "*** profile: $TEST_PROFILE ***"
 if test -n "$TEST_HASH"
 then
     echo "*** commit hash: $TEST_HASH ***"
@@ -84,7 +86,12 @@ echo "#                                            #"
 echo "#            TESTING MINIO $TYPE             #"
 echo "#                                            #"
 echo "##############################################"
+if test "$PROFILE" = "full"
+then
 ./5-sys-minio.sh
+else
+echo "SKIP 5-sys-minio.sh for $PROFILE profile"
+fi
 
 echo "##############################################"
 echo "#                                            #"
@@ -98,7 +105,12 @@ echo "#                                            #"
 echo "#            TESTING STATIC $TYPE            #"
 echo "#                                            #"
 echo "##############################################"
+if test "$PROFILE" = "full"
+then
 ./7-static.sh $TYPE
+else
+echo "SKIP 7-static.sh for $PROFILE profile"
+fi
 
 echo "##############################################"
 echo "#                                            #"
@@ -126,7 +138,12 @@ echo "#                                            #"
 echo "#            TESTING USER MINIO $TYPE        #"
 echo "#                                            #"
 echo "##############################################"
+if test "$PROFILE" = "full"
+then
 ./10-user-minio.sh $TYPE
+else
+echo "SKIP 10-user-minio.sh for $PROFILE profile"
+fi
 
 echo "##############################################"
 echo "#                                            #"

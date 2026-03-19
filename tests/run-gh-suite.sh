@@ -15,6 +15,7 @@ echo "*** using $OPS_BRANCH ***"
 echo "*** requested tag: $TEST_TAG ***"
 echo "*** resolved test: $TEST_NAME -> $TEST_SELECTOR ***"
 echo "*** platform: $TEST_PLATFORM | arch: $TEST_ARCH ***"
+echo "*** profile: $TEST_PROFILE ***"
 echo "*** ops trace: $OPS_TRACE | k3s server trace: $K3S_SERVER_TRACE ***"
 if test -n "$TEST_HASH"
 then
@@ -56,11 +57,26 @@ run_step "Deploy ($TEST_SELECTOR)" ./1-deploy.sh "$TEST_INPUT"
 run_step "System Redis ($TEST_SELECTOR)" ./3-sys-redis.sh "$TEST_INPUT"
 run_step "System FerretDB ($TEST_SELECTOR)" ./4a-sys-ferretdb.sh "$TEST_INPUT"
 run_step "System Postgres ($TEST_SELECTOR)" ./4b-sys-postgres.sh "$TEST_INPUT"
-run_step "System Minio ($TEST_SELECTOR)" ./5-sys-minio.sh "$TEST_INPUT"
+if test "$TEST_PROFILE" = "full"
+then
+    run_step "System Minio ($TEST_SELECTOR)" ./5-sys-minio.sh "$TEST_INPUT"
+else
+    echo "*** skipping System Minio for $TEST_PROFILE profile ***"
+fi
 run_step "Login ($TEST_SELECTOR)" ./6-login.sh "$TEST_INPUT"
-run_step "Static ($TEST_SELECTOR)" ./7-static.sh "$TEST_INPUT"
+if test "$TEST_PROFILE" = "full"
+then
+    run_step "Static ($TEST_SELECTOR)" ./7-static.sh "$TEST_INPUT"
+else
+    echo "*** skipping Static for $TEST_PROFILE profile ***"
+fi
 run_step "User Redis ($TEST_SELECTOR)" ./8-user-redis.sh "$TEST_INPUT"
 run_step "User FerretDB ($TEST_SELECTOR)" ./9a-user-ferretdb.sh "$TEST_INPUT"
 run_step "User Postgres ($TEST_SELECTOR)" ./9b-user-postgres.sh "$TEST_INPUT"
-run_step "User Minio ($TEST_SELECTOR)" ./10-user-minio.sh "$TEST_INPUT"
+if test "$TEST_PROFILE" = "full"
+then
+    run_step "User Minio ($TEST_SELECTOR)" ./10-user-minio.sh "$TEST_INPUT"
+else
+    echo "*** skipping User Minio for $TEST_PROFILE profile ***"
+fi
 run_step "Runtime Testing ($TEST_SELECTOR)" ./14-runtime-testing.sh "$TEST_INPUT"

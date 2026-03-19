@@ -18,6 +18,7 @@
 . "$(dirname "$0")/lib/selector.sh"
 resolve_test_selector "${1:?test selector}"
 TYPE="$TEST_SELECTOR"
+PROFILE="${TEST_PROFILE:-full}"
 
 cd "$(dirname $0)"
 
@@ -114,8 +115,11 @@ k3s-amd)
     run_logged ops cloud k3s delete "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
     append_remote_trace "$K3S_AMD_SSH_HOST" "ops cloud k3s create $K3S_AMD_SSH_HOST ${SSH_USER:-root}"
     run_logged ops cloud k3s create "$K3S_AMD_SSH_HOST" "${SSH_USER:-root}"
-    append_remote_trace "$K3S_AMD_SSH_HOST" "ops config slim"
-    run_logged ops config slim
+    if test "$PROFILE" = "slim"
+    then
+        append_remote_trace "$K3S_AMD_SSH_HOST" "ops config slim"
+        run_logged ops config slim
+    fi
     append_remote_trace "$K3S_AMD_SSH_HOST" "ops setup cluster"
     run_logged ops setup cluster
     append_remote_trace "$K3S_AMD_SSH_HOST" "END deploy selector=$TYPE"
@@ -148,8 +152,11 @@ k3s-arm)
     run_logged ops cloud k3s delete "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
     append_remote_trace "$K3S_ARM_SSH_HOST" "ops cloud k3s create $K3S_ARM_SSH_HOST ${SSH_USER:-root}"
     run_logged ops cloud k3s create "$K3S_ARM_SSH_HOST" "${SSH_USER:-root}"
-    append_remote_trace "$K3S_ARM_SSH_HOST" "ops config slim"
-    run_logged ops config slim
+    if test "$PROFILE" = "slim"
+    then
+        append_remote_trace "$K3S_ARM_SSH_HOST" "ops config slim"
+        run_logged ops config slim
+    fi
     append_remote_trace "$K3S_ARM_SSH_HOST" "ops setup cluster"
     run_logged ops setup cluster
     append_remote_trace "$K3S_ARM_SSH_HOST" "END deploy selector=$TYPE"
