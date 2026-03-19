@@ -215,4 +215,39 @@
 
 - The agent still could not write 1Password secrets directly because `op` was not authenticated in the agent's non-interactive environment.
 - The intended value to set is:
-  - `OpenServerless / TESTING / K3S_AMD_APIHOST = testing.nuvolaris.dev`
+  - `OpenServerless / TESTING / K3S_AMD_APIHOST = testing1-k3s-amd.nuvolaris.dev`
+
+## 2026-03-19 Runtime Job Image Propagation Fix
+
+### Problem found on the remote `k3s-amd` run
+
+- The `Operator PR Test` flow in `nuvolaris/openserverless-testing` was correctly:
+  - building a temporary PR image
+  - pushing it to GHCR
+  - patching `_operator/olaris/opsroot.json`
+- Even with that patch, the remote `k3s-amd` deployment still failed later in `couchdb-init`.
+- The pod log on the remote cluster showed:
+  - `registry.hub.docker.com/apache/openserverless-operator:0.1.0-testing.2309191654`
+  - `ErrImagePull`
+  - `ImagePullBackOff`
+- Root cause:
+  - the operator StatefulSet used the patched `IMAGES_OPERATOR` image for the controller pod itself
+  - but the controller container still inherited `OPERATOR_IMAGE` and `OPERATOR_TAG` defaults baked into the image `Dockerfile`
+  - downstream jobs created by the controller therefore still referenced the stale Apache testing tag
+
+### Fix applied on `nuvolaris`
+
+- In `nuvolaris/openserverless-task:main`:
+  - commit `1232d0c` `Propagate operator PR image to runtime jobs`
+  - updated `setup/kubernetes/opsfile.yml` to derive runtime `OPERATOR_IMAGE` and `OPERATOR_TAG` from `IMAGES_OPERATOR`
+  - updated `setup/kubernetes/operator.yaml` to inject those values into the operator pod environment
+- In `nuvolaris/openserverless-operator` PR branch:
+  - branch `test/k3s-traefik-crd`
+  - commit `648b89a` `Use PR operator image for runtime jobs`
+  - moved submodule `olaris` forward to task commit `1232d0c`
+
+### Operational note
+
+- For the `nuvolaris` work resumed after the Apache release steps, commits and pushes were switched back to the user's account/key:
+  - SSH key: `~/.ssh/id_ed25519`
+  - Git email restored to `miki3421@gmail.com` in the operator PR clone before committing the submodule bump
