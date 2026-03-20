@@ -26,8 +26,7 @@ on:
 env:
   TEST_TAG: ${{ github.ref_name }}
   OPS_REPO: ${{ vars.OPS_REPO || 'https://github.com/apache/openserverless-task' }}
-  OPS_BRANCH: main
-  NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
+  OPS_BRANCH: ${{ vars.OPS_BRANCH || 'main' }}
 
 jobs:
   test-linux:
@@ -48,8 +47,7 @@ jobs:
       #   if: ${{ startsWith(github.ref_name, 'gke') }}
       - name: Install ops
         run: |
-          curl -sL bit.ly/get-ops | bash
-          ops -info
+          curl -sL n7s.co/get-ops | bash
           ops -t > /dev/null
       - name: Install autossh
         run: |
@@ -62,7 +60,6 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
-          NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
           K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
           K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
@@ -70,11 +67,35 @@ jobs:
           K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
           APIHOST: op://OpenServerless/TESTING/APIHOST
       - name: Debug Action (if requested)
-        run:  .github/debugAction.sh
+        run:  .github/supportAction.sh
       - name: Wait for Debug (if requested)
-        run: .github/waitIfDebug.sh
-      - name: Run GitHub Test Suite
-        run: tests/run-gh-suite.sh "$TEST_TAG"
+        run: .github/waitIfSupport.sh
+      - name: 1 Deploy
+        run:  |
+              touch .secrets
+              tests/1-deploy.sh $PLATFORM
+      - name: 3 SysRedis
+        run: tests/3-sys-redis.sh $PLATFORM
+      - name: 4 SysMongo
+        run: tests/4a-sys-ferretdb.sh $PLATFORM
+      - name: 4b SysPostgres
+        run: tests/4b-sys-postgres.sh $PLATFORM
+      - name: 5 SysMinio
+        run: tests/5-sys-minio.sh $PLATFORM
+      - name: 6 Login
+        run: tests/6-login.sh $PLATFORM
+      - name: 7 Static
+        run: tests/7-static.sh $PLATFORM
+      - name: 8 UserRedis
+        run: tests/8-user-redis.sh $PLATFORM
+      - name: 9a UserFerretDB
+        run: tests/9a-user-ferretdb.sh $PLATFORM
+      - name: 9b UserPostgres
+        run: tests/9b-user-postgres.sh $PLATFORM
+      - name: 10 UserMinio
+        run: tests/10-user-minio.sh $PLATFORM
+      - name: 14 RuntimeTesting
+        run: tests/14-runtime-testing.sh $PLATFORM
 
   test-windows:
     runs-on: windows-2022
@@ -82,24 +103,24 @@ jobs:
       run:
         shell: powershell
     needs: test-linux
-    if: ${{ ! startsWith(github.ref_name, 'kind') }}
+    #if: ${{ ! startsWith(github.ref_name, 'kind') }}
     # temporary disabled
-    #if: false # skip for now
+    if: false # skip for now
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         # Install Git (which includes Git Bash)
-      # Commented out -- GKE plugin not needed without GCP environment:
-      # - name: 'Set up Cloud SDK'
-      #   uses: 'google-github-actions/setup-gcloud@v1'
-      #   if: ${{ startsWith(github.ref_name, 'gke') }}
-      # - name: 'Update plugin'
-      #   if: ${{ startsWith(github.ref_name, 'gke') }}
-      #   run: gcloud components install gke-gcloud-auth-plugin
+        # Commented out -- GKE plugin not needed without GCP environment:
+        # - name: 'Set up Cloud SDK'
+        #   uses: 'google-github-actions/setup-gcloud@v1'
+        #   if: ${{ startsWith(github.ref_name, 'gke') }}
+        # - name: 'Update plugin'
+        #   if: ${{ startsWith(github.ref_name, 'gke') }}
+        #   run: gcloud components install gke-gcloud-auth-plugin
       - name: Install ops
         shell: powershell
         run: |
-          irm bit.ly/get-ops-exe | iex
+          irm n7s.co/get-ops-exe | iex
       - name: Add ops to path for runner
         shell: bash
         run: |
@@ -148,7 +169,7 @@ jobs:
         shell: bash
     #if: ${{ ! startsWith(github.ref_name, 'kind') }}
     # temporary disabled
-    #if: false # skip for now
+    if: false # skip for now
     needs: test-windows
     steps:
       - name: Checkout

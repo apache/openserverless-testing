@@ -15,10 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 
-version: "3"  
-  
+version: "3"
+
 env:
-  TASKS:
+  REF:
     sh: echo $(cd tasks;git rev-parse --short HEAD)
 
 vars:
@@ -28,8 +28,8 @@ vars:
 
 dotenv:
   - .env
-  # secrets are no longer needed
-  #- .secrets
+
+
 
 includes:
   aws: ./TaskfileAWS.yml
@@ -42,15 +42,25 @@ tasks:
 
   status:
     cmds:
-     - ops config use
-     - ops debug info
+    - ops config use
+    - ops debug info
+
+
+  toggle-support:
+    desc: enable/disable support
+    cmds:
+    - |
+      if test -e support
+      then git rm -f support
+      else touch support ; git add support
+      fi
+
 
   kind:create:
     cmds:
     - which docker
     - ops config minimal
     - ops setup devcluster
-
 
   kind:delete:
     - ops setup devcluster --uninstall
@@ -184,18 +194,6 @@ tasks:
   #  cmds:
   #  - task azure:cluster:delete
 
-  progress:
-    #desc: update the progress
-    cmds:
-      - |
-        if test -z "{{.N}}"
-        then echo use task progress N=value
-        else 
-        X=$(((100*{{.N}})/103))
-        echo $X
-        curl -L "https://geps.dev/progress/$X?dangerColor=006600&warningColor=006600&successColor=006600" >img/progress.svg
-        fi
-
   # --> DISABLED - secrets are taken from 1PASSWORD
   #upload-secrets:
   #  cmds:
@@ -261,27 +259,30 @@ tasks:
   #    - task: secrets-kube
 
   # OK
-  test-ci: |
-    git tag -d $(git tag)
-    git tag {{.N}}-{{.TAG}}
-    git push origin --tags
+  test-ci:
+    requires: {vars: [N, REF]}
+    cmds:
+    - |
+      git tag -d $(git tag)
+      git tag {{.N}}-{{.REF}}
+      git push origin --tags
 
   # OK (kind)
-  d: task test-ci N=kind TAG=$TASKS
+  d: task test-ci N=kind REF=$REF
   # OK (k3s)
-  k: task test-ci N=k3s TAG=$TASKS
+  k: task test-ci N=k3s REF=$REF
   # OK (k3s-arm)
-  r: task test-ci N=k3s-arm TAG=$TASKS
+  r: task test-ci N=k3s-arm REF=$REF
   # OK (mk8s)
-  m: task test-ci N=mk8s TAG=$TASKS
+  m: task test-ci N=mk8s REF=$REF
   # OK (eks)
-  e: task test-ci N=eks TAG=$TASKS
+  e: task test-ci N=eks REF=$REF
   # OK (aks)
-  a: task test-ci N=aks TAG=$TASKS
+  a: task test-ci N=aks REF=$REF
   # TODO: to be verified
-  g: task test-ci N=gke TAG=$TASKS
+  g: task test-ci N=gke REF=$REF
   # TODO: to be verified
-  o: task test-ci N=osh TAG=$TASKS
+  o: task test-ci N=osh REF=$REF
 
   all:
    ignore_error: true
@@ -293,7 +294,7 @@ tasks:
 
   tag-test-ci: |
     git tag {{.TAG}}
-    git push origin --tags  
+    git push origin --tags
 
   # TODO: to be verified
   config:
@@ -302,11 +303,11 @@ tasks:
     #- task aws:cluster:config
     #- task gcp:vm:config
     #- task gcp:cluster:config
-    - task azure:vm:config
+    #- task azure:vm:config
 
   login:
     - az login --use-device-code
-    - gcloud auth login 
+    - gcloud auth login
     - gcloud config set project openserverless-testing
 
   # TODO: to be verified
@@ -316,7 +317,7 @@ tasks:
     - echo $ID_RSA_B64 | base64 -d >conf/id_rsa
     - chmod 0600 conf/id_rsa
     - |
-      eval $(ssh-agent -s) 
+      eval $(ssh-agent -s)
       ssh-add conf/id_rsa
       ops cloud k3s kubeconfig api.k3s.opstest.top ubuntu
       ops cloud mk8s kubeconfig api.mk8s.opstest.top ubuntu
@@ -331,8 +332,9 @@ tasks:
     - echo "gke kubeconfig"
     - ops cloud gke kubeconfig
     - echo "openshift kubeconfig"
-    - KUBECONFIG=conf/osh.kubeconfig oc login https://api.nuvolaris-testing.oshgcp.opstest.top:6443 --insecure-skip-tls-verify=true  -u kubeadmin -p $OSH_KUBEADMIN_PASSWORD
-    - ops cloud osh import conf/osh.kubeconfig 
+    - echo "aks kubeconfig"
     - ops cloud aks kubeconfig
+    - KUBECONFIG=conf/osh.kubeconfig oc login https://api.nuvolaris-testing.oshgcp.opstest.top:6443 --insecure-skip-tls-verify=true  -u kubeadmin -p $OSH_KUBEADMIN_PASSWORD
+    - ops cloud osh import conf/osh.kubeconfig
     - ops config use
 
