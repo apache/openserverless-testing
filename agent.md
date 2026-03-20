@@ -391,3 +391,25 @@
 - `tests/14-runtime-testing.sh` now derives the repository root from the script location and uses:
   - `${REPO_ROOT}/test-runtimes/manifest.yaml`
 - This makes the manifest lookup independent from the shell's current working directory.
+
+## 2026-03-20 Branch Cleanup
+
+### Nuvolaris branches removed
+
+- Deleted merged or obsolete remote branches from `nuvolaris/openserverless-testing`:
+  - `feat/pr-tag-platform-arch-testing`
+  - `feat/test-tag-hash-contract`
+- Deleted merged or obsolete remote branches from `nuvolaris/openserverless-task`:
+  - `feat/pr-tag-platform-arch-testing`
+  - `feat/test-tag-hash-contract`
+- Deleted merged or obsolete remote branches from `nuvolaris/openserverless-operator`:
+  - `feat/pr-tag-platform-arch-testing`
+  - `feat/test-tag-hash-contract`
+  - `test/kind-amd-kube-rbac-proxy-registry`
+  - `test/k3s-traefik-crd`
+
+### Local cleanup
+
+- Removed the local `openserverless-operator-nuvolaris-traefik-test` worktree.
+- Deleted the matching local `operator` branches listed above.
+- Left Apache-specific release branches and worktrees untouched.
