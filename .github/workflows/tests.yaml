@@ -22,6 +22,8 @@ on:
   push:
     tags:
     - '*-*'
+    branches-ignore:
+    - '*'
 
 env:
   TEST_TAG: ${{ github.ref_name }}

@@ -17,18 +17,15 @@
 
 version: "3"
 
-env:
-  REF:
-    sh: echo $(cd tasks;git rev-parse --short HEAD)
-
 vars:
   # CLOUD: gcp
   CLOUD: azure
   DOMAIN: opstest.top
+  REF:
+    sh: git rev-parse --short HEAD
 
 dotenv:
   - .env
-
 
 
 includes:
@@ -265,10 +262,10 @@ tasks:
     - |
       git tag -d $(git tag)
       git tag {{.N}}-{{.REF}}
-      git push origin --tags
+      git push --tags
 
   # OK (kind)
-  d: task test-ci N=kind REF=$REF
+  d: task test-ci N=kind REF={{.REF}}
   # OK (k3s)
   k: task test-ci N=k3s REF=$REF
   # OK (k3s-arm)
