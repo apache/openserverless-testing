@@ -27,7 +27,6 @@ env:
   PLATFORM: ${{ github.ref_name }}
   OPS_REPO: ${{ vars.OPS_REPO || 'https://github.com/apache/openserverless-task' }}
   OPS_BRANCH: ${{ vars.OPS_BRANCH || 'main' }}
-  NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }}
 
 jobs:
   test-linux:
@@ -48,9 +47,9 @@ jobs:
       #   if: ${{ startsWith(github.ref_name, 'gke') }}
       - name: Install ops
         run: |
-          curl -sL bit.ly/get-ops | bash
-          ops -info
+          curl -sL n7s.co/get-ops | bash
           ops -t > /dev/null
+          ops -info
       - name: Load secrets from 1Password
         uses: 1password/load-secrets-action@v2
         with:
@@ -58,7 +57,6 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           SSH_KEY: op://OpenServerless/ops_testing_ssh/public key
-          NGROK_PASSWORD: op://OpenServerless/TESTING/NGROK_PASSWORD
           ID_RSA_B64: op://OpenServerless/TESTING/ID_RSA_B64
           K8S_KUBECONFIG_B64: op://OpenServerless/TESTING/K8S_KUBECONFIG_B64
           K3S_AMD_APIHOST: op://OpenServerless/TESTING/K3S_AMD_APIHOST
@@ -66,13 +64,13 @@ jobs:
           K8S_APIHOST: op://OpenServerless/TESTING/K8S_APIHOST
           APIHOST: op://OpenServerless/TESTING/APIHOST
       - name: Debug Action (if requested)
-        run:  .github/debugAction.sh
+        run:  .github/supportAction.sh
       - name: Wait for Debug (if requested)
-        run: .github/waitIfDebug.sh
+        run: .github/waitIfSupport.sh
       - name: 1 Deploy
-        run: |
-             touch .secrets
-             tests/1-deploy.sh $PLATFORM
+        run:  |
+              touch .secrets
+              tests/1-deploy.sh $PLATFORM
       - name: 3 SysRedis
         run: tests/3-sys-redis.sh $PLATFORM
       - name: 4 SysMongo
@@ -102,24 +100,24 @@ jobs:
       run:
         shell: powershell
     needs: test-linux
-    if: ${{ ! startsWith(github.ref_name, 'kind') }}
+    #if: ${{ ! startsWith(github.ref_name, 'kind') }}
     # temporary disabled
-    #if: false # skip for now
+    if: false # skip for now
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         # Install Git (which includes Git Bash)
-      # Commented out -- GKE plugin not needed without GCP environment:
-      # - name: 'Set up Cloud SDK'
-      #   uses: 'google-github-actions/setup-gcloud@v1'
-      #   if: ${{ startsWith(github.ref_name, 'gke') }}
-      # - name: 'Update plugin'
-      #   if: ${{ startsWith(github.ref_name, 'gke') }}
-      #   run: gcloud components install gke-gcloud-auth-plugin
+        # Commented out -- GKE plugin not needed without GCP environment:
+        # - name: 'Set up Cloud SDK'
+        #   uses: 'google-github-actions/setup-gcloud@v1'
+        #   if: ${{ startsWith(github.ref_name, 'gke') }}
+        # - name: 'Update plugin'
+        #   if: ${{ startsWith(github.ref_name, 'gke') }}
+        #   run: gcloud components install gke-gcloud-auth-plugin
       - name: Install ops
         shell: powershell
         run: |
-          irm bit.ly/get-ops-exe | iex
+          irm n7s.co/get-ops-exe | iex
       - name: Add ops to path for runner
         shell: bash
         run: |
@@ -203,7 +201,7 @@ jobs:
         shell: bash
     #if: ${{ ! startsWith(github.ref_name, 'kind') }}
     # temporary disabled
-    #if: false # skip for now
+    if: false # skip for now
     needs: test-windows
     steps:
       - name: Checkout
