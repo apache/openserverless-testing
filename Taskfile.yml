@@ -262,6 +262,7 @@ tasks:
     - |
       git tag -d $(git tag)
       git tag {{.N}}-{{.REF}}
+      git commit -m "triggening {{.N}} for ref {{.REF}}"
       git push --tags
 
   # OK (kind)
