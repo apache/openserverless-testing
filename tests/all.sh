@@ -18,9 +18,17 @@
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
-# echo
-export OPS_BRANCH=main
-echo "*** using $OPS_BRANCH ***"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OPEN_SERVERLESS_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+export OPS_BRANCH="${OPS_BRANCH:-main}"
+if [ -d "$OPEN_SERVERLESS_ROOT/olaris" ]; then
+	export OPS_ROOT="${OPS_ROOT:-$OPEN_SERVERLESS_ROOT/olaris}"
+	export PATH="$OPEN_SERVERLESS_ROOT:$PATH"
+fi
+
+echo "*** using OPS_BRANCH=$OPS_BRANCH ***"
+echo "*** using OPS_ROOT=${OPS_ROOT:-default} ***"
 
 # if type not in (kind, k3s, mk8s, aks, eks, gke) exit
 
@@ -35,6 +43,7 @@ case "$TYPE" in
 	;;
 esac
 
+cd "$SCRIPT_DIR"
 rm  -f _results
 collect() {
 	if "$@"
@@ -124,7 +133,7 @@ collect ./9b-user-postgres.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
-echo "#            TESTING USER MINIO $TYPE        #"
+echo "#          TESTING USER SEAWEEDFS $TYPE      #"
 echo "#                                            #"
 echo "##############################################"
 collect ./10-user-seaweedfs.sh $TYPE
@@ -136,4 +145,5 @@ echo "#                                            #"
 echo "##############################################"
 collect ./14-runtime-testing.sh $TYPE
 
+echo "============================================"
 cat _results

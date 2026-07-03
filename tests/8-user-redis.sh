@@ -38,25 +38,13 @@ fi
 
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$user" TIMEOUT=120
 
-case "$TYPE" in
-kind)
-    if OPS_USER=$user OPS_PASSWORD=$password ops -login http://miniops.me | grep "Successfully logged in as $user."; then
-        echo SUCCESS LOGIN
-    else
-        echo FAIL LOGIN
-        exit 1
-    fi
-    ;;
-*)
-    APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
-    if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."; then
-        echo SUCCESS LOGIN
-    else
-        echo FAIL LOGIN
-        exit 1
-    fi
-    ;;
-esac
+APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
+if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."; then
+    echo SUCCESS LOGIN
+else
+    echo FAIL LOGIN
+    exit 1
+fi
 
 if ops setup nuvolaris redis | grep hello; then
     echo SUCCESS SETUP REDIS ACTION
