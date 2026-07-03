@@ -42,9 +42,12 @@ export PREFL_NO_MEM_CHECK=true
 case "$TYPE" in
 kind)
     # create vm with docker
-    ops config reset
-    ops setup devcluster --uninstall
-    ops setup devcluster
+    if ! curl -s http://miniops.me  | grep OpenServerless >/dev/null 2>/dev/null
+    then
+        ops config reset
+        ops config slim
+        ops setup devcluster
+    fi
     ;;
 k3s)
     # create vm and install in the server

@@ -23,27 +23,30 @@ password=$(ops -random --str 12)
 user="demouser"
 
 ENABLE_REDIS=""
-if ops config status | grep OPERATOR_COMPONENT_REDIS=true; then
+if ops config status | grep -q OPERATOR_COMPONENT_REDIS=true; then
     ENABLE_REDIS="--redis"
 fi
 
 ENABLE_MONGODB=""
-if ops config status | grep OPERATOR_COMPONENT_MONGODB=true; then
+if ops config status | grep -q OPERATOR_COMPONENT_MONGODB=true; then
     ENABLE_MONGODB="--mongodb"
 fi
 
-ENABLE_MINIO=""
-if ops config status | grep OPERATOR_COMPONENT_MINIO=true; then
-    ENABLE_MINIO="--minio"
+ENABLE_OBJECT_STORAGE=""
+if ops config status | grep -q OPERATOR_COMPONENT_SEAWEEDFS=true; then
+    ENABLE_OBJECT_STORAGE="--seaweedfs"
+elif ops config status | grep -q OPERATOR_COMPONENT_MINIO=true; then
+    ENABLE_OBJECT_STORAGE="--minio"
 fi
 
 ENABLE_POSTGRES=""
-if ops config status | grep OPERATOR_COMPONENT_POSTGRES=true; then
+if ops config status | grep -q OPERATOR_COMPONENT_POSTGRES=true; then
     ENABLE_POSTGRES="--postgres"
 fi
 
 # Create a new user "demo-user" with ops admin adduser with previous services enabled
-if ops admin adduser $user demo@email.com $password $ENABLE_REDIS $ENABLE_MONGODB $ENABLE_MINIO $ENABLE_POSTGRES | grep "whiskuser.nuvolaris.org/$user created"; then
+ops admin deleteuser $user >/dev/null 2>&1 || true
+if ops admin adduser $user demo@email.com $password $ENABLE_REDIS $ENABLE_MONGODB $ENABLE_OBJECT_STORAGE $ENABLE_POSTGRES | grep "whiskuser.nuvolaris.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user
@@ -52,12 +55,7 @@ fi
 
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$user" TIMEOUT=120
 
-APIURL="http://localhost:3233"
-# if type is not kind, get the APIURL from ops debug apihost
-if [ "$TYPE" != "kind" ]; then
-    APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
-fi
-
+APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
 echo $APIURL
 if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."; then
     echo SUCCESS LOGIN

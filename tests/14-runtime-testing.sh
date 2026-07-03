@@ -17,32 +17,34 @@
 # under the License.
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TESTING_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 user="testactionuser"
 password=$(ops -random --str 12)
 
-if ops admin adduser $user $user@email.com $password --minio --redis --mongodb --postgres | grep "whiskuser.nuvolaris.org/$user created"
+OBJECT_STORAGE_FLAG=""
+if ops config status | grep -q OPERATOR_COMPONENT_SEAWEEDFS=true; then
+    OBJECT_STORAGE_FLAG="--seaweedfs"
+elif ops config status | grep -q OPERATOR_COMPONENT_MINIO=true; then
+    OBJECT_STORAGE_FLAG="--minio"
+fi
+
+ops admin deleteuser $user 2>/dev/null || true
+if ops admin adduser $user $user@email.com $password $OBJECT_STORAGE_FLAG --redis --mongodb --postgres | grep "whiskuser.nuvolaris.org/$user created"
 then echo SUCCESS CREATING $user
 else echo FAIL CREATING $user; exit 1 
 fi
 
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$user" TIMEOUT=600
 
-case "$TYPE" in
-    (kind) 
-        if OPS_USER=$user OPS_PASSWORD=$password ops -login http://localhost:80 | grep "Successfully logged in as $user."
-        then echo SUCCESS LOGIN
-        else echo FAIL LOGIN ; exit 1 
-        fi
-    ;;
-    *)
-        APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
-        if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."
-        then echo SUCCESS LOGIN
-        else echo FAIL LOGIN ; exit 1 
-        fi
-    ;;    
-esac
+
+
+APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
+if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."
+then echo SUCCESS LOGIN
+else echo FAIL LOGIN ; exit 1
+fi
 
 export S3_ACCESS_KEY=$(ops -config S3_ACCESS_KEY)
 export S3_SECRET_KEY=$(ops -config S3_SECRET_KEY)
@@ -56,9 +58,7 @@ export MONGODB_URL=$(ops -config MONGODB_URL)
 export MONGODB_DB=$user
 export POSTGRES_URL=$(ops -config POSTGRES_URL)
 
-PWD=$(pwd)
-
-if ops -wsk project deploy --manifest ${PWD}/test-runtimes/manifest.yaml | grep Success
+if ops -wsk project deploy --manifest ${TESTING_DIR}/test-runtimes/manifest.yaml | grep Success
 then echo SUCCESS DEPLOY PROJECT;
 else echo FAIL DEPLOY PROJECT; exit 1 
 fi

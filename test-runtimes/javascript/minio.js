@@ -33,11 +33,12 @@ async function main(args) {
 
     let bucketExists = await minioClient.bucketExists(bucketName);
 
-    if(!bucketExists) {       
-        response.bucketOperation = await  minioClient.makeBucket(bucketName, 'us-east-1');
+    if(!bucketExists) {
+        throw new Error(`bucket ${bucketName} does not exist`);
     }
 
-    response.buckets = await minioClient.listBuckets();
+    response.bucket = bucketName;
+    response.exists = bucketExists;
     return {
         "body": response
     }

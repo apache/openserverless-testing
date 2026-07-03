@@ -15,7 +15,21 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-TYPE="${1:?test type}"
-TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
-./all.sh $TYPE
+ops config disable --minio
+ops config enable --seaweedfs
+ops update apply
+ops setup nuvolaris wait-cm JSONPATH='{.metadata.annotations.s3_bucket_data}'
+ops setup nuvolaris wait-cm-value \
+    JSONPATH='{.metadata.annotations.s3_provider}' \
+    EXPECTED_VALUE='seaweedfs' \
+    MESSAGE='Waiting for SeaweedFS S3 provider'
+
+if ! ops config status | grep OPERATOR_COMPONENT_SEAWEEDFS=true
+then echo SKIPPING ; exit 0
+elif [[ "$(ops -config S3_PROVIDER)" != "seaweedfs" ]]
+then echo FAIL S3_PROVIDER ; exit 1
+elif ops setup nuvolaris seaweedfs | grep nuvolaris-data
+then echo SUCCESS ; exit 0
+else echo FAIL ; exit 1
+fi

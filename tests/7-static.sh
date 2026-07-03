@@ -18,15 +18,21 @@
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
-ops config enable --minio --static
+ops config disable --minio
+ops config enable --seaweedfs --static
 ops update apply
 
 ops util kube waitfor FOR=condition=ready OBJ=pod/nuvolaris-static-0 TIMEOUT=60
+ops setup nuvolaris wait-cm-value \
+    JSONPATH='{.metadata.annotations.s3_provider}' \
+    EXPECTED_VALUE='seaweedfs' \
+    MESSAGE='Waiting for SeaweedFS S3 provider'
 
 user="demostaticuser"
 password=$(ops -random --str 12)
 
-if ops admin adduser $user $user@email.com $password --minio | grep "whiskuser.nuvolaris.org/$user created"; then
+ops admin deleteuser $user >/dev/null 2>&1 || true
+if ops admin adduser $user $user@email.com $password --seaweedfs | grep "whiskuser.nuvolaris.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user
