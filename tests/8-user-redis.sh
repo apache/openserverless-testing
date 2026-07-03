@@ -28,7 +28,7 @@ fi
 user="demoredisuser"
 password=$(ops -random --str 12)
 
-ops admin deleteuser $user 2>/dev/null|| true
+ops admin deleteuser $user 2>/dev/null || true
 if ops admin adduser $user $user@email.com $password --redis | grep "whiskuser.nuvolaris.org/$user created"; then
     echo SUCCESS CREATING $user
 else

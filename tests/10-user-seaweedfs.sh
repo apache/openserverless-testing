@@ -27,6 +27,7 @@ fi
 
 user="demoseaweedfsuser$(date +%s)"
 password=$(ops -random --str 12)
+ops admin deleteuser $user 2>/dev/null || true
 
 if ops admin adduser $user $user@email.com $password --seaweedfs | grep "whiskuser.nuvolaris.org/$user created"; then
     echo SUCCESS CREATING $user $password
@@ -35,7 +36,6 @@ else
     exit 1
 fi
 
-ops admin deleteuser $user 2>/dev/null || true
 
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$user" TIMEOUT=120
 

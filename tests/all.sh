@@ -35,93 +35,105 @@ case "$TYPE" in
 	;;
 esac
 
+rm  -f _results
+collect() {
+	if "$@"
+	then
+		echo SUCCESS "$1" >> _results
+	else
+		echo FAIL "$1" >> _results
+	fi
+}
+
 echo "##############################################"
 echo "#                                            #"
 echo "#             DEPLOYING $TYPE                #"
 echo "#                                            #"
 echo "##############################################"
-./1-deploy.sh $TYPE
+collect ./1-deploy.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#             TESTING SSL $TYPE              #"
 echo "#                                            #"
 echo "##############################################"
-./2-ssl.sh $TYPE
+collect ./2-ssl.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING REDIS $TYPE             #"
 echo "#                                            #"
 echo "##############################################"
-./3-sys-redis.sh
+collect ./3-sys-redis.sh
 
 echo "##############################################"
 echo "#                                            #"
 echo "#    TESTING FERRETDB (MONGO) $TYPE          #"
 echo "#                                            #"
 echo "##############################################"
-./4a-sys-ferretdb.sh
+collect ./4a-sys-ferretdb.sh
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING POSTGRES $TYPE          #"
 echo "#                                            #"
 echo "##############################################"
-./4b-sys-postgres.sh
+collect ./4b-sys-postgres.sh
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING SEAWEEDFS $TYPE             #"
 echo "#                                            #"
 echo "##############################################"
-./5-sys-seaweedfs.sh
+collect ./5-sys-seaweedfs.sh
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING LOGIN $TYPE             #"
 echo "#                                            #"
 echo "##############################################"
-./6-login.sh $TYPE
+collect ./6-login.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING STATIC $TYPE            #"
 echo "#                                            #"
 echo "##############################################"
-./7-static.sh $TYPE
+collect ./7-static.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING USER REDIS $TYPE        #"
 echo "#                                            #"
 echo "##############################################"
-./8-user-redis.sh $TYPE
+collect ./8-user-redis.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#   TESTING USER FERRETDB (MONGO) $TYPE      #"
 echo "#                                            #"
 echo "##############################################"
-./9a-user-ferretdb.sh $TYPE
+collect ./9a-user-ferretdb.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING USER POSTGRES $TYPE     #"
 echo "#                                            #"
 echo "##############################################"
-./9b-user-postgres.sh $TYPE
+collect ./9b-user-postgres.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING USER MINIO $TYPE        #"
 echo "#                                            #"
 echo "##############################################"
-./10-user-seaweedfs.sh $TYPE
+collect ./10-user-seaweedfs.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
 echo "#            TESTING OPS RUNTIMES $TYPE      #"
 echo "#                                            #"
 echo "##############################################"
-./14-runtime-testing.sh $TYPE
+collect ./14-runtime-testing.sh $TYPE
+
+cat _results
