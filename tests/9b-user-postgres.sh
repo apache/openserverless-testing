@@ -28,6 +28,8 @@ fi
 user="demopostgresuser"
 password=$(ops -random --str 12)
 
+ops admin deleteuser $user 2>/dev/null || true
+
 if ops admin adduser $user $user@email.com $password --postgres | grep "whiskuser.nuvolaris.org/$user created"; then
     echo SUCCESS CREATING $user
 else
@@ -39,7 +41,7 @@ ops util kube waitfor FOR=condition=ready OBJ="wsku/$user" TIMEOUT=120
 
 case "$TYPE" in
 kind)
-    if OPS_USER=$user OPS_PASSWORD=$password ops -login http://localhost:3233 | grep "Successfully logged in as $user."; then
+    if OPS_USER=$user OPS_PASSWORD=$password ops -login http://miniops.me | grep "Successfully logged in as $user."; then
         echo SUCCESS LOGIN
     else
         echo FAIL LOGIN

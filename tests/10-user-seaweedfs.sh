@@ -18,65 +18,63 @@
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
-if ops config status | grep OPERATOR_COMPONENT_MINIO=true; then
-    echo "MINIO ENABLED"
+if ops config status | grep OPERATOR_COMPONENT_SEAWEEDFS=true; then
+    echo "SEAWEEDFS ENABLED"
 else
-    echo "MINIO DISABLED - SKIPPING"
+    echo "SEAWEEDFS DISABLED - SKIPPING"
     exit 0
 fi
 
-user="demominiouser"
+user="demoseaweedfsuser$(date +%s)"
 password=$(ops -random --str 12)
 
-if ops admin adduser $user $user@email.com $password --minio | grep "whiskuser.nuvolaris.org/$user created"; then
+if ops admin adduser $user $user@email.com $password --seaweedfs | grep "whiskuser.nuvolaris.org/$user created"; then
     echo SUCCESS CREATING $user $password
 else
     echo FAIL CREATING $user
     exit 1
 fi
 
+ops admin deleteuser $user 2>/dev/null || true
+
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$user" TIMEOUT=120
 
-case "$TYPE" in
-kind)
-    if OPS_USER=$user OPS_PASSWORD=$password ops -login http://localhost:80 | grep "Successfully logged in as $user."; then
-        echo SUCCESS LOGIN
-    else
-        echo FAIL LOGIN
-        exit 1
-    fi
-    ;;
-*)
-    APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
-    if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."; then
-        echo SUCCESS LOGIN
-    else
-        echo FAIL LOGIN
-        exit 1
-    fi
-    ;;
-esac
-
-if ops setup nuvolaris minio | grep hello; then
-    echo SUCCESS SETUP MINIO ACTION
+APIURL=$(ops debug apihost | awk '/whisk API host/{print $4}')
+if OPS_USER=$user OPS_PASSWORD=$password ops -login $APIURL | grep "Successfully logged in as $user."; then
+    echo SUCCESS LOGIN
 else
-    echo FAIL SETUP ACTION MINIO
+    echo FAIL LOGIN
     exit 1
 fi
 
-if ops -wsk action list | grep "/$user/hello/minio"; then
-    echo SUCCESS USER MINIO ACTION LIST
+if ops setup nuvolaris seaweedfs | grep "$user-data"; then
+    echo SUCCESS SETUP SEAWEEDFS S3 ACTION
 else
-    echo FAIL USER MINIO ACTION LIST
+    echo FAIL SETUP ACTION SEAWEEDFS S3
     exit 1
 fi
 
+if ops -wsk action list | grep "/$user/hello/seaweedfs"; then
+    echo SUCCESS USER SEAWEEDFS S3 ACTION LIST
+else
+    echo FAIL USER SEAWEEDFS S3 ACTION LIST
+    exit 1
+fi
+
+S3_PROVIDER=$(ops -config S3_PROVIDER)
 S3_ACCESS_KEY=$(ops -config S3_ACCESS_KEY)
 S3_SECRET_KEY=$(ops -config S3_SECRET_KEY)
 S3_HOST=$(ops -config S3_HOST)
 S3_PORT=$(ops -config S3_PORT)
 S3_BUCKET_DATA=$(ops -config S3_BUCKET_DATA)
 S3_BUCKET_STATIC=$(ops -config S3_BUCKET_STATIC)
+
+if [[ "$S3_PROVIDER" != "seaweedfs" ]]; then
+    echo FAIL USER S3_PROVIDER
+    exit 1
+else
+    echo SUCCESS USER S3_PROVIDER
+fi
 
 if [[ -z "$S3_ACCESS_KEY" ]]; then
     echo FAIL USER S3_ACCESS_KEY
@@ -85,7 +83,7 @@ else
     echo SUCCESS USER S3_ACCESS_KEY
 fi
 
-if ops -wsk action invoke hello/minio -p s3_access "$S3_ACCESS_KEY" \
+if ops -wsk action invoke hello/seaweedfs -p s3_access "$S3_ACCESS_KEY" \
     -p s3_secret "$S3_SECRET_KEY" \
     -p s3_host "$S3_HOST" \
     -p s3_port "$S3_PORT" \

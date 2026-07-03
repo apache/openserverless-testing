@@ -72,10 +72,10 @@ echo "##############################################"
 
 echo "##############################################"
 echo "#                                            #"
-echo "#            TESTING MINIO $TYPE             #"
+echo "#            TESTING SEAWEEDFS $TYPE             #"
 echo "#                                            #"
 echo "##############################################"
-./5-sys-minio.sh
+./5-sys-seaweedfs.sh
 
 echo "##############################################"
 echo "#                                            #"
@@ -117,7 +117,7 @@ echo "#                                            #"
 echo "#            TESTING USER MINIO $TYPE        #"
 echo "#                                            #"
 echo "##############################################"
-./10-user-minio.sh $TYPE
+./10-user-seaweedfs.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
