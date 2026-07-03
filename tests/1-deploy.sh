@@ -43,6 +43,7 @@ case "$TYPE" in
 kind)
     # create vm with docker
     ops config reset
+    ops config slim
     ops setup devcluster --uninstall
     ops setup devcluster
     ;;
