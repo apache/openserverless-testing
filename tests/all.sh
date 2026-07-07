@@ -44,9 +44,9 @@ case "$TYPE" in
 esac
 
 cd "$SCRIPT_DIR"
-rm  -f _results
+rm  -f _results _log
 collect() {
-	if "$@"
+	if "$@" 2>&1 | tee _log
 	then
 		echo SUCCESS "$1" >> _results
 	else
