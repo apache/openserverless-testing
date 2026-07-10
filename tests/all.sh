@@ -105,6 +105,13 @@ collect ./6-login.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
+echo "#          TESTING SSO MOCK $TYPE            #"
+echo "#                                            #"
+echo "##############################################"
+collect ./11-sso-mock.sh $TYPE
+
+echo "##############################################"
+echo "#                                            #"
 echo "#            TESTING STATIC $TYPE            #"
 echo "#                                            #"
 echo "##############################################"
