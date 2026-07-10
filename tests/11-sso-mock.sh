@@ -29,6 +29,8 @@ MOCK_CLIENT_ID="openserverless-sso-mock-client"
 MOCK_CLIENT_SECRET="mock-client-secret"
 MOCK_GROUP="openserverless-users"
 MOCK_ISSUER="http://${MOCK_NAME}.${NAMESPACE}.svc.cluster.local:8080/realms/mock"
+SSO_LOGIN_TIMEOUT_SECONDS="${SSO_LOGIN_TIMEOUT_SECONDS:-120}"
+SSO_LOGIN_RETRY_SECONDS="${SSO_LOGIN_RETRY_SECONDS:-2}"
 
 if ! ops config sso --help >/dev/null 2>&1; then
     echo "SSO command is not available in this ops build"
@@ -147,12 +149,28 @@ if [ -z "$APIURL" ]; then
     exit 1
 fi
 
-if OPS_SSO_LOGIN_FLOW=password OPS_PASSWORD="$MOCK_PASSWORD" ops -login "$APIURL" "$MOCK_USER" | grep "Successfully logged in as $MOCK_USER."; then
-    echo SUCCESS SSO PASSWORD LOGIN
-else
-    echo FAIL SSO PASSWORD LOGIN
-    exit 1
-fi
+LOGIN_DEADLINE=$((SECONDS + SSO_LOGIN_TIMEOUT_SECONDS))
+while true; do
+    if LOGIN_OUTPUT="$(OPS_SSO_LOGIN_FLOW=password OPS_PASSWORD="$MOCK_PASSWORD" ops -login "$APIURL" "$MOCK_USER" 2>&1)" && \
+        grep -Fq "Successfully logged in as $MOCK_USER." <<<"$LOGIN_OUTPUT"; then
+        printf '%s\n' "$LOGIN_OUTPUT"
+        echo SUCCESS SSO PASSWORD LOGIN
+        break
+    fi
+
+    printf '%s\n' "$LOGIN_OUTPUT"
+    if ! grep -Eq 'OIDC password login failed \((502|503)\)' <<<"$LOGIN_OUTPUT"; then
+        echo FAIL SSO PASSWORD LOGIN
+        exit 1
+    fi
+    if (( SECONDS >= LOGIN_DEADLINE )); then
+        echo "FAIL SSO PASSWORD LOGIN timed out after ${SSO_LOGIN_TIMEOUT_SECONDS}s"
+        exit 1
+    fi
+
+    echo "admin-api ingress not ready; retrying SSO password login in ${SSO_LOGIN_RETRY_SECONDS}s"
+    sleep "$SSO_LOGIN_RETRY_SECONDS"
+done
 
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$MOCK_USER" TIMEOUT=120
 
