@@ -156,6 +156,13 @@ echo "#                                            #"
 echo "##############################################"
 collect ./14-runtime-testing.sh $TYPE
 
+echo "##############################################"
+echo "#                                            #"
+echo "#        TESTING OPS IDE DEPLOYER $TYPE      #"
+echo "#                                            #"
+echo "##############################################"
+collect ./15-ide-deployer.sh $TYPE
+
 echo "============================================"
 cat _results
 exit "$FAILED"
