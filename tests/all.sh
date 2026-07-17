@@ -49,7 +49,8 @@ cd "$SCRIPT_DIR"
 rm  -f _results _log
 FAILED=0
 collect() {
-	if "$@" 2>&1 | tee _log
+	"$@" 2>&1 | tee _log
+	if [ ${PIPESTATUS[0]} -eq 0 ]
 	then
 		echo SUCCESS "$1" >> _results
 	else
