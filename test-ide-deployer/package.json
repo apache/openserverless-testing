@@ -1,0 +1,15 @@
+{
+  "name": "openserverless-ide-deployer-test",
+  "private": true,
+  "openserverless": {
+    "runtimeProfiles": {
+      "python-custom": {
+        "builder": "python:3.13",
+        "requirements": "runtime/python-custom.txt",
+        "actions": [
+          "runtimeprofiletest/custom-runtime"
+        ]
+      }
+    }
+  }
+}
