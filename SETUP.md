@@ -12,7 +12,7 @@
 - Copy `.env.dist` in `.env` and put the secrets in it (ask us of course)
 - Execute `task kubeconfig` to load all the kubeconfig in ops.
 - Execute `ops config use` then `ops config use <n>` to select a configuration
-- Execute `ops setup nuvolaris login` to log into one of them
+- Execute `ops setup openserverless login` to log into one of them
 
 # Generate all the secrets
 

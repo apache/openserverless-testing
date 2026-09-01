@@ -18,11 +18,11 @@
 
 ops config enable --mongodb
 ops update apply
-ops setup nuvolaris wait-cm JSONPATH='{.metadata.annotations.mongodb_url}'
+ops setup openserverless wait-cm JSONPATH='{.metadata.annotations.mongodb_url}'
 
 if ! ops config status | grep OPERATOR_COMPONENT_MONGODB=true
 then echo SKIPPING ; exit 0
-elif ops setup nuvolaris mongodb | grep hello
+elif ops setup openserverless mongodb | grep hello
 then echo SUCCESS ; exit 0
 else echo FAIL ; exit 1 
 fi

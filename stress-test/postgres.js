@@ -24,7 +24,7 @@ async function main(args) {
 
   const createTableText = `
     CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-    CREATE TABLE IF NOT EXISTS nuvolaris_table (
+    CREATE TABLE IF NOT EXISTS openserverless_table (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         message varchar(100)        
     );
@@ -38,9 +38,9 @@ async function main(args) {
   try {
     await client.query(createTableText)
     const message = (Math.random() + 1).toString(36).substring(2);
-    await client.query('INSERT INTO nuvolaris_table(message) VALUES($1)', [message])
-    const { rows } = await client.query('SELECT id, message FROM nuvolaris_table where message = $1', [message]);
-    const { rowCount } = await client.query('DELETE FROM nuvolaris_table WHERE id = $1', [rows[0].id]);
+    await client.query('INSERT INTO openserverless_table(message) VALUES($1)', [message])
+    const { rows } = await client.query('SELECT id, message FROM openserverless_table where message = $1', [message]);
+    const { rowCount } = await client.query('DELETE FROM openserverless_table WHERE id = $1', [rows[0].id]);
     response.body = {
       rows,
       rowCount

@@ -25,14 +25,14 @@ def main(args):
 
         # Open a cursor to perform database operations
         with conn.cursor() as cur:
-            cur.execute("""CREATE SCHEMA IF NOT EXISTS nuvolaris;
-            SET search_path TO nuvolaris;
+            cur.execute("""CREATE SCHEMA IF NOT EXISTS openserverless;
+            SET search_path TO openserverless;
             """)
 
             # Execute a command: this creates a new table
             cur.execute("""
                 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-                CREATE TABLE IF NOT EXISTS nuvolaris_table (
+                CREATE TABLE IF NOT EXISTS openserverless_table (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     message varchar(100)        
                 );
@@ -40,15 +40,15 @@ def main(args):
 
             # Pass data to fill a query placeholders and let Psycopg perform
             # the correct conversion (no SQL injections!)
-            cur.execute("INSERT INTO nuvolaris_table(message) VALUES(%(message)s)",{"message":"Nuvolaris Postgres is up and running!"})
+            cur.execute("INSERT INTO openserverless_table(message) VALUES(%(message)s)",{"message":"OpenServerless Postgres is up and running!"})
             # Make the changes to the database persistent
 
             # Query the database and obtain data as Python objects.
-            cur.execute("SELECT message FROM nuvolaris_table")
+            cur.execute("SELECT message FROM openserverless_table")
             record = cur.fetchone()[0]
 
-            cur.execute("DROP table nuvolaris_table")
-            cur.execute("DROP SCHEMA nuvolaris CASCADE")
+            cur.execute("DROP table openserverless_table")
+            cur.execute("DROP SCHEMA openserverless CASCADE")
 
             response["body"] = record
             conn.commit()
