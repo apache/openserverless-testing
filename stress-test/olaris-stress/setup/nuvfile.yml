@@ -38,7 +38,7 @@ tasks:
           config STATUS_LAST=devcluster
           nuv config standalone --javaopts=2 --poolmemory=6 --activation_max_payload=1048576       
           nuv stress setup kubernetes create
-          nuv setup nuvolaris login
+          nuv setup openserverless login
           nuv util notify "{{.TASK}}"
       fi
 
@@ -52,7 +52,7 @@ tasks:
       then  nuv setup kubernetes delete CONTEXT="{{._context_}}"
       else
             nuv setup kubernetes create CONTEXT="{{._context_}}"
-            nuv setup nuvolaris login
+            nuv setup openserverless login
             config STATUS_LAST=cluster 
             if test -n "{{._context_}}" 
             then config STATUS_CONTEXT="{{._context_}}"
@@ -71,7 +71,7 @@ tasks:
       else
           nuv cloud k3s create SERVER="{{._server_}}" USERNAME="{{._user_}}"
           nuv setup kubernetes create
-          nuv setup nuvolaris login
+          nuv setup openserverless login
           config STATUS_LAST=server STATUS_SERVER="{{._server_}}"
           if test -n "{{._user_}}"
           then config STATUS_USERNAME="{{._user_}}"

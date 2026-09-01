@@ -31,7 +31,7 @@ elif ops config status | grep -q OPERATOR_COMPONENT_MINIO=true; then
 fi
 
 ops admin deleteuser $user 2>/dev/null || true
-if ops admin adduser $user $user@email.com $password $OBJECT_STORAGE_FLAG --redis --mongodb --postgres | grep "whiskuser.nuvolaris.org/$user created"
+if ops admin adduser $user $user@email.com $password $OBJECT_STORAGE_FLAG --redis --mongodb --postgres | grep "whiskuser.openserverless.org/$user created"
 then echo SUCCESS CREATING $user
 else echo FAIL CREATING $user; exit 1
 fi

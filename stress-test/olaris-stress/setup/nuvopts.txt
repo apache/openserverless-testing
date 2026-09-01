@@ -5,7 +5,7 @@ Usage:
   setup devcluster [--uninstall|--status] 
   
 Commands:
-  setup devcluster    deploy Nuvolaris in a devcluster created locally
+  setup devcluster    deploy OpenServerless in a devcluster created locally
                       you need Docker Desktop available with at least 6G of memory assigned
 
 Options:

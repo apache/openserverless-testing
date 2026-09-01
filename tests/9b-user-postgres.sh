@@ -30,7 +30,7 @@ password=$(ops -random --str 12)
 
 ops admin deleteuser $user 2>/dev/null || true
 
-if ops admin adduser $user $user@email.com $password --postgres | grep "whiskuser.nuvolaris.org/$user created"; then
+if ops admin adduser $user $user@email.com $password --postgres | grep "whiskuser.openserverless.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user
@@ -47,7 +47,7 @@ else
     exit 1
 fi
 
-if ops setup nuvolaris postgres | grep 'Nuvolaris Postgres is up and running!'; then
+if ops setup openserverless postgres | grep 'OpenServerless Postgres is up and running!'; then
     echo SUCCESS SETUP POSTGRES ACTION
 else
     echo FAIL SETUP POSTGRES ACTION
@@ -69,7 +69,7 @@ else
     echo SUCCESS USER POSTGRES_URL
 fi
 
-if ops -wsk action invoke hello/postgres -p dburi "$POSTGRES_URL" -r | grep 'Nuvolaris Postgres is up and running!'; then
+if ops -wsk action invoke hello/postgres -p dburi "$POSTGRES_URL" -r | grep 'OpenServerless Postgres is up and running!'; then
     echo SUCCESS
     exit 0
 else

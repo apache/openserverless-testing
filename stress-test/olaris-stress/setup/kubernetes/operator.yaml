@@ -18,25 +18,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nuvolaris-operator
-  namespace: nuvolaris  
+  name: openserverless-operator
+  namespace: openserverless  
 spec:  
   replicas: 1
   selector:
     matchLabels:
-      name: nuvolaris-operator
+      name: openserverless-operator
   template:
     metadata:
       labels:
-        name: nuvolaris-operator
-        app: nuvolaris-operator
+        name: openserverless-operator
+        app: openserverless-operator
       annotations:
-        whisks.nuvolaris.org/annotate-version: "true"
+        whisks.openserverless.org/annotate-version: "true"
     spec:
-      serviceAccountName: nuvolaris-operator
+      serviceAccountName: openserverless-operator
       restartPolicy: Always
       containers:
-        - name: nuvolaris-operator
+        - name: openserverless-operator
           image: ${IMAGES_OPERATOR}
           imagePullPolicy: Always
           command: ["./run.sh"]

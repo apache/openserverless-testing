@@ -35,7 +35,7 @@ rn=$(ops -random --str 5)
 
 if [ "$TYPE" = "osh" ]; then
 	# configure
-	ops config apihost api.apps.nuvolaris.osh.nuvtest.net --tls $EMAIL
+	ops config apihost api.apps.openserverless.osh.nuvtest.net --tls $EMAIL
 	ops -update apply
 else
 	ops config reset

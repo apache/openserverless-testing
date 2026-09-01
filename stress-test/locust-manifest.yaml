@@ -60,21 +60,21 @@ data:
   
     def choose_random_page():
         pages = [
-            '/api/v1/web/nuvolaris/default/echo0?name=call1',
-            '/api/v1/web/nuvolaris/default/echo1?name=call2',
-            '/api/v1/web/nuvolaris/default/echo2?name=call3',
-            '/api/v1/web/nuvolaris/default/echo3?name=call4',
-            '/api/v1/web/nuvolaris/default/echo4?name=call5',
-            '/api/v1/web/nuvolaris/default/redis0',
-            '/api/v1/web/nuvolaris/default/redis1',
-            '/api/v1/web/nuvolaris/default/redis2',
-            '/api/v1/web/nuvolaris/default/redis3',
-            '/api/v1/web/nuvolaris/default/redis4',
-            '/api/v1/web/nuvolaris/default/postgres0',
-            '/api/v1/web/nuvolaris/default/postgres1',
-            '/api/v1/web/nuvolaris/default/postgres2',
-            '/api/v1/web/nuvolaris/default/postgres3',
-            '/api/v1/web/nuvolaris/default/postgres4'                        
+            '/api/v1/web/openserverless/default/echo0?name=call1',
+            '/api/v1/web/openserverless/default/echo1?name=call2',
+            '/api/v1/web/openserverless/default/echo2?name=call3',
+            '/api/v1/web/openserverless/default/echo3?name=call4',
+            '/api/v1/web/openserverless/default/echo4?name=call5',
+            '/api/v1/web/openserverless/default/redis0',
+            '/api/v1/web/openserverless/default/redis1',
+            '/api/v1/web/openserverless/default/redis2',
+            '/api/v1/web/openserverless/default/redis3',
+            '/api/v1/web/openserverless/default/redis4',
+            '/api/v1/web/openserverless/default/postgres0',
+            '/api/v1/web/openserverless/default/postgres1',
+            '/api/v1/web/openserverless/default/postgres2',
+            '/api/v1/web/openserverless/default/postgres3',
+            '/api/v1/web/openserverless/default/postgres4'                        
         ]
   
         return random.choice(pages)
@@ -202,7 +202,7 @@ spec:
             mountPath: /config
         env:
           - name: LOCUST_HOST
-            value: "http://controller.nuvolaris:3233"
+            value: "http://controller.openserverless:3233"
           - name: LOCUST_LOGLEVEL
             value: "INFO"
           - name: LOCUST_LOCUSTFILE
@@ -297,7 +297,7 @@ spec:
             mountPath: /config
         env:
           - name: LOCUST_HOST
-            value: "http://controller.nuvolaris:3233"
+            value: "http://controller.openserverless:3233"
           - name: LOCUST_MASTER_NODE_HOST
             value: "locust"
           - name: LOCUST_MASTER_NODE_PORT

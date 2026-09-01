@@ -17,7 +17,20 @@
 #
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: openserverless
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  namespace: openserverless
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kubegres-controller-manager
-  namespace: nuvolaris
+  name: openserverless-operator
+  namespace: openserverless
+  labels:
+    app: openserverless-operator  
