@@ -46,7 +46,7 @@ esac
 cd "$SCRIPT_DIR"
 rm  -f _results _log
 collect() {
-	if "$@" 2>&1 | tee _log
+	if "$@" 2>&1
 	then
 		echo SUCCESS "$1" >> _results
 	else
@@ -91,7 +91,7 @@ collect ./4b-sys-postgres.sh
 
 echo "##############################################"
 echo "#                                            #"
-echo "#            TESTING SEAWEEDFS $TYPE             #"
+echo "#            TESTING SEAWEEDFS $TYPE         #"
 echo "#                                            #"
 echo "##############################################"
 collect ./5-sys-seaweedfs.sh

@@ -61,6 +61,7 @@ export POSTGRES_URL=$(ops -config POSTGRES_URL)
 test_invoke() {
     ACT="$1"
     RES="$2"
+    echo TEST $ACT
     for i in 1 2 3 4 5
     do
         echo "Attempt #$i"
@@ -102,7 +103,7 @@ else echo FAIL JS POSTGRES; exit 1
 fi
 
 #if ops -wsk action invoke javascript/minio -r| grep "$user-data"
-if test_invoke javascript/minio "$user-data"
+if test_invoke javascript/seaweed "$user-data"
 then echo SUCCESS JS S3;
 else echo FAIL JS S3; exit 1
 fi

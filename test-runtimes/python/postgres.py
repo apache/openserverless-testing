@@ -15,33 +15,50 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import psycopg
+import pg8000.dbapi
+
+from urllib.parse import urlparse, unquote
+
+def connect(postgres_url):
+    """
+    Opens a pg8000 connection from the given postgres URL. pg8000 takes
+    connection arguments as keywords, so the URL is parsed here.
+    """
+    url = urlparse(postgres_url)
+    return pg8000.dbapi.connect(
+        host=url.hostname,
+        port=url.port or 5432,
+        user=unquote(url.username) if url.username else None,
+        password=unquote(url.password) if url.password else None,
+        database=url.path.lstrip("/") or None,
+    )
 
 def main(args):
 
     response = {"body": {}}
 
-    with psycopg.connect(args.get("postgres_url")) as conn:
-
+    conn = connect(args.get("postgres_url"))
+    try:
         # Open a cursor to perform database operations
-        with conn.cursor() as cur:
-            cur.execute("""CREATE SCHEMA IF NOT EXISTS openserverless;
-            SET search_path TO openserverless;
-            """)
+        cur = conn.cursor()
+        try:
+            # pg8000 uses the extended query protocol: one statement per execute()
+            cur.execute("CREATE SCHEMA IF NOT EXISTS openserverless")
+            cur.execute("SET search_path TO openserverless")
 
             # Execute a command: this creates a new table
+            cur.execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto"')
             cur.execute("""
-                CREATE EXTENSION IF NOT EXISTS "pgcrypto";
                 CREATE TABLE IF NOT EXISTS openserverless_table (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    message varchar(100)        
-                );
+                    message varchar(100)
+                )
                 """)
 
-            # Pass data to fill a query placeholders and let Psycopg perform
+            # Pass data to fill a query placeholders and let pg8000 perform
             # the correct conversion (no SQL injections!)
-            cur.execute("INSERT INTO openserverless_table(message) VALUES(%(message)s)",{"message":"OpenServerless Postgres is up and running!"})
-            # Make the changes to the database persistent
+            cur.execute("INSERT INTO openserverless_table(message) VALUES(%s)",
+                        ("OpenServerless Postgres is up and running!",))
 
             # Query the database and obtain data as Python objects.
             cur.execute("SELECT message FROM openserverless_table")
@@ -51,6 +68,11 @@ def main(args):
             cur.execute("DROP SCHEMA openserverless CASCADE")
 
             response["body"] = record
+            # Make the changes to the database persistent
             conn.commit()
+        finally:
+            cur.close()
+    finally:
+        conn.close()
 
     return response
