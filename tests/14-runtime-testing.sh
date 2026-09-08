@@ -104,8 +104,8 @@ fi
 
 #if ops -wsk action invoke javascript/minio -r| grep "$user-data"
 if test_invoke javascript/seaweed "$user-data"
-then echo SUCCESS JS S3;
-else echo FAIL JS S3; exit 1
+then echo SUCCESS JS SEAWEED;
+else echo FAIL JS SEAWEED; exit 1
 fi
 
 #if ops -wsk action invoke python/hello -r| grep world
@@ -133,7 +133,7 @@ else echo FAIL PYTHON POSTGRES; exit 1
 fi
 
 #if ops -wsk action invoke python/minio -r| grep "$user-data"
-if test_invoke python/minio "$user-data"
-then echo SUCCESS PYTHON MINIO; exit 0
-else echo FAIL PYTHON MINIO; exit 1
+if test_invoke python/seaweed "$user-data"
+then echo SUCCESS PYTHON SEAWEED; exit 0
+else echo FAIL PYTHON SEAWEED; exit 1
 fi
