@@ -2,6 +2,8 @@
 
 Since we are testing in many clouds and environments, test setup is pretty compilcated. Details are in [this document](SETUP.md), please read it carefully...
 
+For the optional SSO backport checks, see [SSO smoke testing](docs/SSO.md).
+
 ## Acceptance Test Status: 103/103
 
 <img src="img/progress.svg" width="60%">
