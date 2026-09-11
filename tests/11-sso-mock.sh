@@ -37,6 +37,8 @@ if ! ops config sso --help >/dev/null 2>&1; then
     exit 1
 fi
 
+ops setup openserverless system-api deploy
+
 if ops config sso show 2>/dev/null | grep -q '^SSO_ENABLED=true$'; then
     echo "SSO already enabled - skipping mock SSO test to avoid changing an existing setup"
     exit 0
