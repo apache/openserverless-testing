@@ -26,4 +26,4 @@ header:
     - DISCLAIMER
     - WARN
     - '**/*.txt'
-    #- 'go.sum'
+    - 'go.sum'
