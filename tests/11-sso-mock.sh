@@ -21,7 +21,7 @@ TYPE="${1:?test type}"
 TYPE="$(echo "$TYPE" | awk -F- '{print $1}')"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KUBECTL="${KUBECTL:-kubectl}"
-NAMESPACE="${NAMESPACE:-nuvolaris}"
+NAMESPACE="${NAMESPACE:-openserverless}"
 MOCK_NAME="openserverless-sso-mock"
 MOCK_USER="ssomockuser"
 MOCK_PASSWORD="mock-user-password"
@@ -36,6 +36,8 @@ if ! ops config sso --help >/dev/null 2>&1; then
     echo "SSO command is not available in this ops build"
     exit 1
 fi
+
+ops setup openserverless system-api deploy
 
 if ops config sso show 2>/dev/null | grep -q '^SSO_ENABLED=true$'; then
     echo "SSO already enabled - skipping mock SSO test to avoid changing an existing setup"
@@ -54,7 +56,7 @@ trap cleanup EXIT
 
 ops admin deleteuser "$MOCK_USER" >/dev/null 2>&1 || true
 
-ADMIN_API_IMAGE="$("$KUBECTL" -n "$NAMESPACE" get statefulset nuvolaris-system-api -o jsonpath='{.spec.template.spec.containers[0].image}')"
+ADMIN_API_IMAGE="$("$KUBECTL" -n "$NAMESPACE" get statefulset openserverless-system-api -o jsonpath='{.spec.template.spec.containers[0].image}')"
 if [ -z "$ADMIN_API_IMAGE" ]; then
     echo "FAIL missing admin-api image"
     exit 1
@@ -174,7 +176,7 @@ done
 
 ops util kube waitfor FOR=condition=ready OBJ="wsku/$MOCK_USER" TIMEOUT=120
 
-if ops setup nuvolaris hello | grep hello; then
+if ops setup openserverless hello | grep hello; then
     echo SUCCESS SSO HELLO SETUP
 else
     echo FAIL SSO HELLO SETUP

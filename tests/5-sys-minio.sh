@@ -18,11 +18,11 @@
 
 ops config enable --minio
 ops update apply
-ops setup nuvolaris wait-cm JSONPATH='{.metadata.annotations.s3_bucket_data}'
+ops setup openserverless wait-cm JSONPATH='{.metadata.annotations.s3_bucket_data}'
 
 if ! ops config status | grep OPERATOR_COMPONENT_MINIO=true
 then echo SKIPPING ; exit 0
-elif ops setup nuvolaris minio | grep nuvolaris-data
+elif ops setup openserverless minio | grep openserverless-data
 then echo SUCCESS ; exit 0
 else echo FAIL ; exit 1 
 fi

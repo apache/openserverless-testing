@@ -15,33 +15,25 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: nuvolaris-operator
-  namespace: nuvolaris  
-spec:  
-  replicas: 1
-  selector:
-    matchLabels:
-      name: nuvolaris-operator
-  template:
-    metadata:
-      labels:
-        name: nuvolaris-operator
-        app: nuvolaris-operator
-      annotations:
-        whisks.nuvolaris.org/annotate-version: "true"
-    spec:
-      serviceAccountName: nuvolaris-operator
-      restartPolicy: Always
-      containers:
-        - name: nuvolaris-operator
-          image: ${IMAGES_OPERATOR}
-          imagePullPolicy: Always
-          command: ["./run.sh"]
-          args: ["--verbose"]
-          securityContext:
-              capabilities:
-                drop:
-                - ALL  
+K="kubectl -n openserverless"
+
+function force_delete {
+    ITEM=$1
+    N=0
+    while [[ $N -lt 3 ]]
+    do
+        echo $((N++)) deleting $ITEM
+        if ! $K get $ITEM 2>/dev/null
+        then echo $ITEM gone...
+             return
+        fi
+        if ! $K delete $ITEM --timeout=10s --grace-period=0
+        then $K patch $ITEM --type=merge --patch '{"metadata": {"finalizers":[] } }'
+        fi
+    done
+    exit 1
+}
+
+for i in $($K get wsku -o name) wsk/controller 
+do force_delete $i
+done

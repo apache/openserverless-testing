@@ -36,8 +36,8 @@ packages:
         function: javascript/mongodb.js
       postgres:
         function: javascript/postgres.js
-      minio:
-        function: javascript/minio.js
+      seaweed:
+        function: javascript/seaweed.js
   python:
     inputs:
       redis_url: ${REDIS_URL}
@@ -59,5 +59,5 @@ packages:
         function: python/mongodb.py
       postgres:
         function: python/postgres.py
-      minio:
-        function: python/minio.py
+      seaweed:
+        function: python/seaweed.py

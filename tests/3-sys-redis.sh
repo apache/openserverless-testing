@@ -19,9 +19,9 @@
 
 ops config enable --redis
 ops update apply
-ops setup nuvolaris wait-cm JSONPATH='{.metadata.annotations.redis_prefix}'
+ops setup openserverless wait-cm JSONPATH='{.metadata.annotations.redis_prefix}'
 
-if ops setup nuvolaris redis | grep hello
+if ops setup openserverless redis | grep hello
 then echo SUCCESS ; exit 0
 else echo FAIL ; exit 1 
 fi

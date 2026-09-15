@@ -15,9 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 #
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: kubegres-controller-manager
-  namespace: nuvolaris
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Apache Software Foundation
+
+  paths-ignore:
+    - LICENSE
+    - NOTICE
+    - DISCLAIMER
+    - WARN
+    - '**/*.txt'
+    - 'go.sum'

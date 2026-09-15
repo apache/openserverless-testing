@@ -29,7 +29,7 @@ user="demomongouser"
 password=$(ops -random --str 12)
 
 ops admin deleteuser $user 2>/dev/null || true
-if ops admin adduser $user $user@email.com $password --mongodb | grep "whiskuser.nuvolaris.org/$user created"; then
+if ops admin adduser $user $user@email.com $password --mongodb | grep "whiskuser.openserverless.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user
@@ -46,7 +46,7 @@ else
     exit 1
 fi
 
-if ops setup nuvolaris mongodb | grep hello; then
+if ops setup openserverless mongodb | grep hello; then
     echo SUCCESS SETUP MONGODB ACTION
 else
     echo FAIL SETUP MONGODB ACTION

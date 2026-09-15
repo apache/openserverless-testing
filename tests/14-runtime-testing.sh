@@ -31,7 +31,7 @@ elif ops config status | grep -q OPERATOR_COMPONENT_MINIO=true; then
 fi
 
 ops admin deleteuser $user 2>/dev/null || true
-if ops admin adduser $user $user@email.com $password $OBJECT_STORAGE_FLAG --redis --mongodb --postgres | grep "whiskuser.nuvolaris.org/$user created"
+if ops admin adduser $user $user@email.com $password $OBJECT_STORAGE_FLAG --redis --mongodb --postgres | grep "whiskuser.openserverless.org/$user created"
 then echo SUCCESS CREATING $user
 else echo FAIL CREATING $user; exit 1
 fi
@@ -61,6 +61,7 @@ export POSTGRES_URL=$(ops -config POSTGRES_URL)
 test_invoke() {
     ACT="$1"
     RES="$2"
+    echo TEST $ACT
     for i in 1 2 3 4 5
     do
         echo "Attempt #$i"
@@ -102,9 +103,9 @@ else echo FAIL JS POSTGRES; exit 1
 fi
 
 #if ops -wsk action invoke javascript/minio -r| grep "$user-data"
-if test_invoke javascript/minio "$user-data"
-then echo SUCCESS JS S3;
-else echo FAIL JS S3; exit 1
+if test_invoke javascript/seaweed "$user-data"
+then echo SUCCESS JS SEAWEED;
+else echo FAIL JS SEAWEED; exit 1
 fi
 
 #if ops -wsk action invoke python/hello -r| grep world
@@ -132,7 +133,7 @@ else echo FAIL PYTHON POSTGRES; exit 1
 fi
 
 #if ops -wsk action invoke python/minio -r| grep "$user-data"
-if test_invoke python/minio "$user-data"
-then echo SUCCESS PYTHON MINIO; exit 0
-else echo FAIL PYTHON MINIO; exit 1
+if test_invoke python/seaweed "$user-data"
+then echo SUCCESS PYTHON SEAWEED; exit 0
+else echo FAIL PYTHON SEAWEED; exit 1
 fi

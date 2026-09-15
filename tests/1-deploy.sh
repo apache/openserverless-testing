@@ -47,7 +47,6 @@ kind)
         ops config reset
         ops config slim
         ops setup devcluster
-        ops setup nuvolaris system-api deploy
     fi
     ;;
 k3s)

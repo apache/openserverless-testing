@@ -18,11 +18,11 @@
 
 ops config enable --postgres
 ops update apply
-ops setup nuvolaris wait-cm JSONPATH='{.metadata.annotations.postgres_url}'
+ops setup openserverless wait-cm JSONPATH='{.metadata.annotations.postgres_url}'
 
 if ! ops config status | grep OPERATOR_COMPONENT_POSTGRES=true
 then echo SKIPPING ; exit 0
-elif ops setup nuvolaris postgres | grep 'Nuvolaris Postgres is up and running!'
+elif ops setup openserverless postgres | grep 'OpenServerless Postgres is up and running!'
 then echo SUCCESS ; exit 0
 else echo FAIL ; exit 1
 fi

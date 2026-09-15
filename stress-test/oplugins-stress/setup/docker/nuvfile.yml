@@ -33,17 +33,17 @@ tasks:
 
   status:
     silent: true
-    desc: status of the Nuvolaris cluster in Docker
+    desc: status of the OpenServerless cluster in Docker
     cmds:
     - |
-      if kind get clusters | grep nuvolaris
-      then echo Cluster Nuvolaris up and running
-      else echo Cluster Nuvolaris not found
+      if kind get clusters | grep openserverless
+      then echo Cluster OpenServerless up and running
+      else echo Cluster OpenServerless not found
       fi
 
   info:
     silent: true
-    desc: info the Nuvolaris cluster in Docker
+    desc: info the OpenServerless cluster in Docker
     cmds:
     - |
       echo "=== KUBECONFIG"
@@ -65,7 +65,7 @@ tasks:
     - > 
       kind create cluster 
       --kubeconfig="$NUV_TMP/kubeconfig" 
-      --wait=1m --name=nuvolaris 
+      --wait=1m --name=openserverless 
       --config=_kind.yaml
 
   ingress:
@@ -77,24 +77,24 @@ tasks:
 
   create:
     silent: true
-    desc: create the Nuvolaris cluster in Docker
+    desc: create the OpenServerless cluster in Docker
     cmds:
     - task: cluster
     - task: ingress
     - cp "$NUV_TMP/kubeconfig" "$NUV_TMP/kind.kubeconfig"
     status:
-    - kind get clusters | grep nuvolaris
+    - kind get clusters | grep openserverless
 
   delete:
     silent: true
-    desc: destroy the Nuvolaris cluster in Docker
+    desc: destroy the OpenServerless cluster in Docker
     cmds:
-    - kind delete clusters nuvolaris
+    - kind delete clusters openserverless
     - rm "$KUBECONFIG" "$NUV_TMP/kind.kubeconfig"
 
   kubeconfig:
     desc: export kubeconfig
     silent: true
     cmds:
-    - kind export kubeconfig --name=nuvolaris --kubeconfig "$NUV_TMP/kubeconfig"
+    - kind export kubeconfig --name=openserverless --kubeconfig "$NUV_TMP/kubeconfig"
     - cp "$NUV_TMP/kubeconfig" "$NUV_TMP/kind.kubeconfig"

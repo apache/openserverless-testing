@@ -29,7 +29,7 @@ user="demoredisuser"
 password=$(ops -random --str 12)
 
 ops admin deleteuser $user 2>/dev/null || true
-if ops admin adduser $user $user@email.com $password --redis | grep "whiskuser.nuvolaris.org/$user created"; then
+if ops admin adduser $user $user@email.com $password --redis | grep "whiskuser.openserverless.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user
@@ -46,7 +46,7 @@ else
     exit 1
 fi
 
-if ops setup nuvolaris redis | grep hello; then
+if ops setup openserverless redis | grep hello; then
     echo SUCCESS SETUP REDIS ACTION
 else
     echo FAIL SETUP REDIS ACTION

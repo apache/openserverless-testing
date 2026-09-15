@@ -1,4 +1,3 @@
-#!/bin/bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -15,14 +14,34 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-
-ops config enable --mongodb
-ops update apply
-ops setup openserverless wait-cm JSONPATH='{.metadata.annotations.mongodb_url}'
-
-if ! ops config status | grep OPERATOR_COMPONENT_MONGODB=true
-then echo SKIPPING ; exit 0
-elif ops setup openserverless mongodb | grep hello
-then echo SUCCESS ; exit 0
-else echo FAIL ; exit 1 
-fi
+#
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: openserverless-operator
+  namespace: openserverless  
+spec:  
+  replicas: 1
+  selector:
+    matchLabels:
+      name: openserverless-operator
+  template:
+    metadata:
+      labels:
+        name: openserverless-operator
+        app: openserverless-operator
+      annotations:
+        whisks.openserverless.org/annotate-version: "true"
+    spec:
+      serviceAccountName: openserverless-operator
+      restartPolicy: Always
+      containers:
+        - name: openserverless-operator
+          image: ${IMAGES_OPERATOR}
+          imagePullPolicy: Always
+          command: ["./run.sh"]
+          args: ["--verbose"]
+          securityContext:
+              capabilities:
+                drop:
+                - ALL  

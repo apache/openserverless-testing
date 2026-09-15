@@ -25,7 +25,7 @@ vars:
   TIMEOUT: 10
   ETC: 
     sh: if $WSK_INSECURE ; then echo "-i" ; else echo "" ; fi
-  CFG: "kubectl -n nuvolaris get wsk/controller"
+  CFG: "kubectl -n openserverless get wsk/controller"
   SLEEP: "500"
 
 env:
@@ -46,7 +46,7 @@ tasks:
       N=0
       while true
       do
-        APIHOST="$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.apihost}')"
+        APIHOST="$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.apihost}')"
         HOST="$(echo $APIHOST | awk -F: '{print $2}')"
         if [[ "$APIHOST" != "" ]] && [[ "$HOST" != "//pending" ]]
         then break
@@ -57,7 +57,7 @@ tasks:
       echo $APIHOST
 
   wait-cm:
-    desc: wait for an annotation in nuvolaris cm/config 
+    desc: wait for an annotation in openserverless cm/config 
     silent: true
     cmds:
       - test -n "{{.JSONPATH}}" || die "use JSONPATH=<cm/config-jsonpath-lookup>"
@@ -66,7 +66,7 @@ tasks:
         RES=false
         while [[ $N -lt {{.RETRY}} ]]
         do           
-          ANNOT_VALUE="$(kubectl -n nuvolaris get cm/config -o jsonpath='{{.JSONPATH}}')"
+          ANNOT_VALUE="$(kubectl -n openserverless get cm/config -o jsonpath='{{.JSONPATH}}')"
           if [[ -z "$ANNOT_VALUE" ]]
           then 
             echo "$((N++)) Waiting for annotations {{.JSONPATH}} to be set"
@@ -78,13 +78,13 @@ tasks:
         $RES      
 
   config:
-    #desc: configuring nuvolaris
+    #desc: configuring openserverless
     silent: true
     cmds:
     - |
       echo export KUBECONFIG=$KUBECONFIG
-      APIHOST=$(kubectl --kubeconfig="$KUBECONFIG" -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.apihost}')
-      AUTH=$(kubectl --kubeconfig="$KUBECONFIG" -n nuvolaris get wsk/controller -ojsonpath='{.spec.openwhisk.namespaces.nuvolaris}')
+      APIHOST=$(kubectl --kubeconfig="$KUBECONFIG" -n openserverless get cm/config -o jsonpath='{.metadata.annotations.apihost}')
+      AUTH=$(kubectl --kubeconfig="$KUBECONFIG" -n openserverless get wsk/controller -ojsonpath='{.spec.openwhisk.namespaces.openserverless}')
       echo export $APIHOST
       echo export $AUTH
       retry -t 100 -m 600 nuv -wsk {{.ETC}} --apihost "$APIHOST" --auth "$AUTH" namespace list
@@ -92,7 +92,7 @@ tasks:
       
   login:
     silent: true
-    desc: configuring nuvolaris
+    desc: configuring openserverless
     cmds:
     - task: wait
     - task: config
@@ -104,7 +104,7 @@ tasks:
     cmds:
     - "{{.RUN}} wsk {{.ETC}} package update hello"
     - "{{.RUN}} wsk {{.ETC}} action update hello/hello hello.js"
-    - "{{.RUN}} wsk {{.ETC}} action invoke hello/hello -p name Nuvolaris -r | grep hello"
+    - "{{.RUN}} wsk {{.ETC}} action invoke hello/hello -p name OpenServerless -r | grep hello"
 
   mongodb:
     silent: true
@@ -113,7 +113,7 @@ tasks:
     - #echo {{.MONGODB_URL}}
     - "{{.RUN}} wsk {{.ETC}} package update hello"
     - |
-      MONGODB_URL="$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.mongodb_url}')"
+      MONGODB_URL="$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.mongodb_url}')"
       {{.RUN}} wsk {{.ETC}} action update hello/mongodb mongodb.js -p mongodb_url "$MONGODB_URL"
     - "{{.RUN}} wsk {{.ETC}} action invoke hello/mongodb -r | grep 'hello'"
   
@@ -123,8 +123,8 @@ tasks:
     cmds:
     - "{{.RUN}} wsk {{.ETC}} package update hello"
     - |
-      REDIS_URL="$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.redis_url}')"
-      REDIS_PREFIX="$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.redis_prefix}')"
+      REDIS_URL="$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.redis_url}')"
+      REDIS_PREFIX="$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.redis_prefix}')"
       {{.RUN}} wsk {{.ETC}} action update hello/redis redis.js -p redis_url "$REDIS_URL" -p redis_prefix "$REDIS_PREFIX"
     - "{{.RUN}} wsk {{.ETC}} action invoke hello/redis -r | grep 'hello'"
 
@@ -134,12 +134,12 @@ tasks:
     cmds:
     - "{{.RUN}} wsk {{.ETC}} package update hello"
     - |
-      MINIO_ACCESS_KEY=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.minio_access_key}')
-      MINIO_SECRET_KEY=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.minio_secret_key}')
-      MINIO_HOST=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.minio_host}')
-      MINIO_PORT=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.minio_port}')
-      MINIO_BUCKET_DATA=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.minio_bucket_data}')
-      MINIO_BUCKET_WEB=$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.minio_bucket_static}')
+      MINIO_ACCESS_KEY=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.minio_access_key}')
+      MINIO_SECRET_KEY=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.minio_secret_key}')
+      MINIO_HOST=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.minio_host}')
+      MINIO_PORT=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.minio_port}')
+      MINIO_BUCKET_DATA=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.minio_bucket_data}')
+      MINIO_BUCKET_WEB=$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.minio_bucket_static}')
       {{.RUN}} wsk {{.ETC}} action update hello/minio minio.js \
       -p minio_access "$MINIO_ACCESS_KEY" \
       -p minio_secret "$MINIO_SECRET_KEY" \
@@ -154,7 +154,7 @@ tasks:
     cmds:    
     - "{{.RUN}} wsk {{.ETC}} package update hello"
     - |
-      POSTGRES_URL="$(kubectl -n nuvolaris get cm/config -o jsonpath='{.metadata.annotations.postgres_url}')"
+      POSTGRES_URL="$(kubectl -n openserverless get cm/config -o jsonpath='{.metadata.annotations.postgres_url}')"
       {{.RUN}} wsk {{.ETC}} action update hello/postgres postgres.js -p dburi "$POSTGRES_URL"
     - "{{.RUN}} wsk {{.ETC}} action invoke hello/postgres -r"
 
@@ -170,18 +170,18 @@ tasks:
     silent: true
     desc: showing the configuration status
     cmds:
-    - echo "=== Nuvolaris Host:"
+    - echo "=== OpenServerless Host:"
     - wsk property get --apihost | awk '/whisk API host/{print $4}'
-    - echo "=== Nuvolaris Key:"
+    - echo "=== OpenServerless Key:"
     - wsk property get --auth | awk '/whisk auth/{print $3}'
     - echo "=== Minio"
-    - kubectl -n nuvolaris get configmap config -n nuvolaris -o=jsonpath='{.metadata.annotations}' | jq . | awk '/minio_/{print $1 " " $2}'
+    - kubectl -n openserverless get configmap config -n openserverless -o=jsonpath='{.metadata.annotations}' | jq . | awk '/minio_/{print $1 " " $2}'
     - echo "=== Redis"
-    - kubectl -n nuvolaris get configmap config -n nuvolaris -o=jsonpath='{.metadata.annotations}' | jq . | awk '/redis_/{print $1 " " $2}'
+    - kubectl -n openserverless get configmap config -n openserverless -o=jsonpath='{.metadata.annotations}' | jq . | awk '/redis_/{print $1 " " $2}'
     - echo "=== Postgres"
-    - kubectl -n nuvolaris get configmap config -n nuvolaris -o=jsonpath='{.metadata.annotations}' | jq . | awk '/postgres_/{print $1 " " $2}'
+    - kubectl -n openserverless get configmap config -n openserverless -o=jsonpath='{.metadata.annotations}' | jq . | awk '/postgres_/{print $1 " " $2}'
     - echo "=== MongoDB (FerretDB)"
-    - kubectl -n nuvolaris get configmap config -n nuvolaris -o=jsonpath='{.metadata.annotations}' | jq . | awk '/mongodb_/{print $1 " " $2}'
+    - kubectl -n openserverless get configmap config -n openserverless -o=jsonpath='{.metadata.annotations}' | jq . | awk '/mongodb_/{print $1 " " $2}'
 
   info:
     - echo "kubectl={{.KUBECTL}}"

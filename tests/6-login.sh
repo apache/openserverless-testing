@@ -46,7 +46,7 @@ fi
 
 # Create a new user "demo-user" with ops admin adduser with previous services enabled
 ops admin deleteuser $user >/dev/null 2>&1 || true
-if ops admin adduser $user demo@email.com $password $ENABLE_REDIS $ENABLE_MONGODB $ENABLE_OBJECT_STORAGE $ENABLE_POSTGRES | grep "whiskuser.nuvolaris.org/$user created"; then
+if ops admin adduser $user demo@email.com $password $ENABLE_REDIS $ENABLE_MONGODB $ENABLE_OBJECT_STORAGE $ENABLE_POSTGRES | grep "whiskuser.openserverless.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user
@@ -64,7 +64,7 @@ else
     exit 1
 fi
 
-if ops setup nuvolaris hello | grep hello; then
+if ops setup openserverless hello | grep hello; then
     echo SUCCESS
 else
     echo FAIL

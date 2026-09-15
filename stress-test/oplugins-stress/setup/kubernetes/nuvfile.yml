@@ -60,14 +60,14 @@ env:
 
 tasks:
   status:
-    desc: show nuvolaris cluster status
+    desc: show openserverless cluster status
     silent: true
     cmds:
-      - echo "=== Nuvolaris Deployment"
-      - "kubectl -n nuvolaris get sts,po,svc"
+      - echo "=== OpenServerless Deployment"
+      - "kubectl -n openserverless get sts,po,svc"
 
   info:
-    desc: show nuvolaris cluster info
+    desc: show openserverless cluster info
     silent: true
     cmds:
       - |
@@ -75,7 +75,7 @@ tasks:
         echo $KUBECONFIG
         kubectl config get-contexts
         echo "=== Nodes"
-        kubectl -n nuvolaris get no
+        kubectl -n openserverless get no
         echo "=== kubectl version"
         kubectl version --short 2>/dev/null
 
@@ -83,7 +83,7 @@ tasks:
     #desc get crd
     silent: true
     cmds:
-      - kubectl get wsk/controller -n nuvolaris -o yaml
+      - kubectl get wsk/controller -n openserverless -o yaml
 
   wait:
     #desc: wait for an object to reach a condition
@@ -95,7 +95,7 @@ tasks:
         RES=false
         while [[ $N -lt {{.RETRY}} ]]
         do echo "$((N++)) waiting for {{.OBJECT}}"
-           if kubectl -n nuvolaris get {{.OBJECT}} 2>/dev/null
+           if kubectl -n openserverless get {{.OBJECT}} 2>/dev/null
            then RES=true ; break
            fi
            sleep {{.TIMEOUT}}
@@ -107,7 +107,7 @@ tasks:
         while [[ $N -lt {{.RETRY}} ]]
         do 
           echo "$((N++)) waiting for {{.OBJECT}} ready"
-          if kubectl -n nuvolaris wait --for=condition=Ready {{.OBJECT}} --timeout={{.TIMEOUT}} 2>/dev/null
+          if kubectl -n openserverless wait --for=condition=Ready {{.OBJECT}} --timeout={{.TIMEOUT}} 2>/dev/null
           then RES=true ; break
           fi
         done
@@ -136,12 +136,12 @@ tasks:
         kind: ConfigMap
         metadata:
           name: openwhisk-runtimes
-          namespace: nuvolaris
+          namespace: openserverless
         data:
           runtimes.json: |-
         EOF
       - awk '{ print "        " $0}' <"{{.RUNTIMES}}" >>_runtimes.yaml
-      - kubectl -n nuvolaris apply -f _runtimes.yaml
+      - kubectl -n openserverless apply -f _runtimes.yaml
     vars:
       RUNTIMES:
         sh: |
@@ -167,7 +167,7 @@ tasks:
       - "kubectl apply -f _operator.yaml"
       - task: wait
         vars:
-          OBJECT: pod/nuvolaris-operator-0
+          OBJECT: pod/openserverless-operator-0
 
   whiskcrd:
     silent: true
@@ -180,7 +180,7 @@ tasks:
     silent: true
     cmds:
       - |
-        if test -z "$SECRET_OPENWHISK_NUVOLARIS"
+        if test -z "$SECRET_OPENWHISK_OPENSERVERLESS"
         then nuv util secret
         else echo Reusing current secrets.
         fi
@@ -206,16 +206,16 @@ tasks:
     #desc: wait for active services
     cmds:
       - |
-        if $NUVOLARIS_REDIS
+        if $OPENSERVERLESS_REDIS
         then nuv setup kubernetes wait OBJECT=po/redis-0
         fi
       - |
-        if $NUVOLARIS_MONGODB
-        then nuv setup kubernetes wait OBJECT=po/nuvolaris-mongodb-0
+        if $OPENSERVERLESS_MONGODB
+        then nuv setup kubernetes wait OBJECT=po/openserverless-mongodb-0
         fi
       - |
-        if $NUVOLARIS_MINIO
-        then  POD="$(kubectl -n nuvolaris get po -l app=minio -o jsonpath='{.items[0].metadata.name}')"
+        if $OPENSERVERLESS_MINIO
+        then  POD="$(kubectl -n openserverless get po -l app=minio -o jsonpath='{.items[0].metadata.name}')"
               nuv setup kubernetes wait OBJECT=pod/$POD
         fi
 
@@ -291,16 +291,16 @@ tasks:
     desc: delete cluster
     cmds:
       - source forcedelete.src
-      - kubectl -n nuvolaris delete sts/nuvolaris-operator --grace-period=0
-      - kubectl -n nuvolaris delete po,sts,job,deploy,svc --all --grace-period=0
-      - kubectl -n nuvolaris delete cm,secret,sa,role --all
-      - kubectl -n nuvolaris delete pvc --all
-      - kubectl -n nuvolaris delete ing --all --grace-period=0 2>/dev/null
-      - kubectl -n nuvolaris delete route --all --grace-period=0 2>/dev/null
-      - kubectl -n nuvolaris delete kubegres --all
+      - kubectl -n openserverless delete sts/openserverless-operator --grace-period=0
+      - kubectl -n openserverless delete po,sts,job,deploy,svc --all --grace-period=0
+      - kubectl -n openserverless delete cm,secret,sa,role --all
+      - kubectl -n openserverless delete pvc --all
+      - kubectl -n openserverless delete ing --all --grace-period=0 2>/dev/null
+      - kubectl -n openserverless delete route --all --grace-period=0 2>/dev/null
+      - kubectl -n openserverless delete kubegres --all
       - kubectl delete clusterissuers/letsencrypt-issuer 2>/dev/null
-      #- "kubectl get ns nuvolaris -o json | jq '.spec.finalizers = []' | kubectl replace --raw '/api/v1/namespaces/nuvolaris/finalize' -f -"
-      - kubectl delete ns nuvolaris
+      #- "kubectl get ns openserverless -o json | jq '.spec.finalizers = []' | kubectl replace --raw '/api/v1/namespaces/openserverless/finalize' -f -"
+      - kubectl delete ns openserverless
 
   superdelete:
     - source superdelete.src
@@ -310,7 +310,7 @@ tasks:
     desc: "unlock locked deletion (removing a finalizers)"
     cmds:
       - >
-        kubectl -n nuvolaris patch wsk/controller --type=merge 
+        kubectl -n openserverless patch wsk/controller --type=merge 
         --patch '{"metadata": {"finalizers":[] } }'
 
   operator-update:
@@ -318,7 +318,7 @@ tasks:
     desc: update the operator using the latest version configured in nuvroot.json if it is different than the current deployed one
     cmds:
       - task: operator
-      - kubectl -n nuvolaris rollout restart statefulset nuvolaris-operator
+      - kubectl -n openserverless rollout restart statefulset openserverless-operator
     preconditions:      
       - sh: '[ $IMAGES_OPERATOR != $(nuv debug operator:version) ]'
-        msg: "Current nuvolaris operator pod it is already updated to newest version. Request ignored."
+        msg: "Current openserverless operator pod it is already updated to newest version. Request ignored."

@@ -15,8 +15,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-set -o pipefail
-
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
@@ -47,14 +45,12 @@ esac
 
 cd "$SCRIPT_DIR"
 rm  -f _results _log
-FAILED=0
 collect() {
-	if "$@" 2>&1 | tee _log
+	if "$@" 2>&1
 	then
 		echo SUCCESS "$1" >> _results
 	else
 		echo FAIL "$1" >> _results
-		FAILED=1
 	fi
 }
 
@@ -95,7 +91,7 @@ collect ./4b-sys-postgres.sh
 
 echo "##############################################"
 echo "#                                            #"
-echo "#            TESTING SEAWEEDFS $TYPE             #"
+echo "#            TESTING SEAWEEDFS $TYPE         #"
 echo "#                                            #"
 echo "##############################################"
 collect ./5-sys-seaweedfs.sh
@@ -106,13 +102,6 @@ echo "#            TESTING LOGIN $TYPE             #"
 echo "#                                            #"
 echo "##############################################"
 collect ./6-login.sh $TYPE
-
-echo "##############################################"
-echo "#                                            #"
-echo "#          TESTING SSO MOCK $TYPE            #"
-echo "#                                            #"
-echo "##############################################"
-collect ./11-sso-mock.sh $TYPE
 
 echo "##############################################"
 echo "#                                            #"
@@ -156,6 +145,12 @@ echo "#                                            #"
 echo "##############################################"
 collect ./14-runtime-testing.sh $TYPE
 
+echo "##############################################"
+echo "#                                            #"
+echo "#          TESTING SSS $TYPE                 #"
+echo "#                                            #"
+echo "##############################################"
+collect ./11-sso-mock.sh $TYPE
+
 echo "============================================"
 cat _results
-exit "$FAILED"

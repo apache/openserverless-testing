@@ -14,26 +14,17 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#
-K="kubectl -n nuvolaris"
+version: '3'
 
-function force_delete {
-    ITEM=$1
-    N=0
-    while [[ $N -lt 3 ]]
-    do
-        echo $((N++)) deleting $ITEM
-        if ! $K get $ITEM 2>/dev/null
-        then echo $ITEM gone...
-             return
-        fi
-        if ! $K delete $ITEM --timeout=10s --grace-period=0
-        then $K patch $ITEM --type=merge --patch '{"metadata": {"finalizers":[] } }'
-        fi
-    done
-    exit 1
-}
+tasks:
+  setup:
+    desc: Install OpenServerless
 
-for i in $($K get wsku -o name) wsk/controller 
-do force_delete $i
-done
+  status:
+    silent: true
+    desc: Status
+    cmds:
+    - nuv setup openserverless status
+    - if {{.__config}} ; then nuv setup status ; fi
+    - if {{.__cluster}} ; then nuv setup kubernetes status ; fi
+

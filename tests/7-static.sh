@@ -22,8 +22,8 @@ ops config disable --minio
 ops config enable --seaweedfs --static
 ops update apply
 
-ops util kube waitfor FOR=condition=ready OBJ=pod/nuvolaris-static-0 TIMEOUT=60
-ops setup nuvolaris wait-cm-value \
+ops util kube waitfor FOR=condition=ready OBJ=pod/openserverless-static-0 TIMEOUT=60
+ops setup openserverless wait-cm-value \
     JSONPATH='{.metadata.annotations.s3_provider}' \
     EXPECTED_VALUE='seaweedfs' \
     MESSAGE='Waiting for SeaweedFS S3 provider'
@@ -32,7 +32,7 @@ user="demostaticuser"
 password=$(ops -random --str 12)
 
 ops admin deleteuser $user >/dev/null 2>&1 || true
-if ops admin adduser $user $user@email.com $password --seaweedfs | grep "whiskuser.nuvolaris.org/$user created"; then
+if ops admin adduser $user $user@email.com $password --seaweedfs | grep "whiskuser.openserverless.org/$user created"; then
     echo SUCCESS CREATING $user
 else
     echo FAIL CREATING $user

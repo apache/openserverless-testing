@@ -15,21 +15,21 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-apiVersion: nuvolaris.org/v1
+apiVersion: openserverless.org/v1
 kind: Whisk
 metadata:
   name: controller
-  namespace: nuvolaris
+  namespace: openserverless
 spec:
-  nuvolaris:
-      password: $SECRET_NUVOLARIS_METADATA
-      kube: ${NUVOLARIS_KUBE:-auto}
-      apihost: ${NUVOLARIS_APIHOST}
-      storageclass: ${NUVOLARIS_STORAGECLASS:-auto}
-      provisioner: ${NUVOLARIS_PROVISIONER:-auto}
-      ingressclass: ${NUVOLARIS_INGRESSCLASS:-auto}
-      ingresslb: ${NUVOLARIS_INGRESSLB:-auto}
-      protocol: ${NUVOLARIS_HOST_PROTOCOL:-auto}
+  openserverless:
+      password: $SECRET_OPENSERVERLESS_METADATA
+      kube: ${OPENSERVERLESS_KUBE:-auto}
+      apihost: ${OPENSERVERLESS_APIHOST}
+      storageclass: ${OPENSERVERLESS_STORAGECLASS:-auto}
+      provisioner: ${OPENSERVERLESS_PROVISIONER:-auto}
+      ingressclass: ${OPENSERVERLESS_INGRESSCLASS:-auto}
+      ingresslb: ${OPENSERVERLESS_INGRESSLB:-auto}
+      protocol: ${OPENSERVERLESS_HOST_PROTOCOL:-auto}
   controller:
     image: "$IMAGES_CONTROLLER" 
   components:
@@ -42,26 +42,26 @@ spec:
     # start kafka
     kafka: false
     # start mongodb
-    mongodb: ${NUVOLARIS_MONGODB}
+    mongodb: ${OPENSERVERLESS_MONGODB}
     # start redis
-    redis: ${NUVOLARIS_REDIS}
+    redis: ${OPENSERVERLESS_REDIS}
     # start cron based action parser
-    cron: ${NUVOLARIS_CRON}
+    cron: ${OPENSERVERLESS_CRON}
     # enable TLS
-    tls: ${NUVOLARIS_TLS}
+    tls: ${OPENSERVERLESS_TLS}
     # minio enabled or not
-    minio: ${NUVOLARIS_MINIO}
+    minio: ${OPENSERVERLESS_MINIO}
     # minio static enabled or not
-    static: ${NUVOLARIS_STATIC} 
+    static: ${OPENSERVERLESS_STATIC} 
     # postgres enabled or not
-    postgres: ${NUVOLARIS_POSTGRES}           
+    postgres: ${OPENSERVERLESS_POSTGRES}           
   tls:
-    acme-registered-email: ${NUVOLARIS_TLSEMAIL}
+    acme-registered-email: ${OPENSERVERLESS_TLSEMAIL}
     acme-server-url: https://acme-v02.api.letsencrypt.org/directory
   openwhisk:
     namespaces:
       whisk-system: $SECRET_OPENWHISK_SYSTEM
-      nuvolaris: $SECRET_OPENWHISK_NUVOLARIS
+      openserverless: $SECRET_OPENWHISK_OPENSERVERLESS
   couchdb:
     host: couchdb
     volume-size: 10
@@ -111,18 +111,18 @@ spec:
     volume-size: 10
     default:
       password: $SECRET_REDIS_DEFAULT
-    nuvolaris:
-      prefix: nuvolaris
-      password: $SECRET_REDIS_NUVOLARIS
+    openserverless:
+      prefix: openserverless
+      password: $SECRET_REDIS_OPENSERVERLESS
   mongodb:
     host: mongodb
     volume-size: 10
     admin: 
       user: whisk_admin
       password: $SECRET_MONGODB_ADMIN
-    nuvolaris:
-      user: nuvolaris
-      password: $SECRET_MONGODB_NUVOLARIS
+    openserverless:
+      user: openserverless
+      password: $SECRET_MONGODB_OPENSERVERLESS
     exposedExternally: False
     useOperator: False
   minio:
@@ -130,14 +130,14 @@ spec:
     admin:
       user: minioadmin
       password: $SECRET_MINIO_ADMIN    
-    nuvolaris:
-      user: nuvolaris
-      password: $SECRET_MINIO_NUVOLARIS
+    openserverless:
+      user: openserverless
+      password: $SECRET_MINIO_OPENSERVERLESS
   postgres:    
     volume-size: 5
     replicas: 2
     admin:      
       password: $SECRET_POSTGRES_ADMIN
       replica-password: $SECRET_POSTGRES_REPLICA
-    nuvolaris:
-      password: $SECRET_POSTGRES_NUVOLARIS                   
+    openserverless:
+      password: $SECRET_POSTGRES_OPENSERVERLESS                   
