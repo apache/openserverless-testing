@@ -16,9 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-ops config disable --minio
-ops config enable --seaweedfs
-ops update apply
+ops config enable --seaweedfs || exit $?
+ops update apply || exit $?
 ops setup openserverless wait-cm JSONPATH='{.metadata.annotations.s3_bucket_data}'
 ops setup openserverless wait-cm-value \
     JSONPATH='{.metadata.annotations.s3_provider}' \

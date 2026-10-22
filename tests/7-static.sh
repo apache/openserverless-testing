@@ -18,9 +18,8 @@
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
-ops config disable --minio
-ops config enable --seaweedfs --static
-ops update apply
+ops config enable --seaweedfs --static || exit $?
+ops update apply || exit $?
 
 ops util kube waitfor FOR=condition=ready OBJ=pod/openserverless-static-0 TIMEOUT=60
 ops setup openserverless wait-cm-value \
@@ -62,7 +61,10 @@ kind)
     RES=false
     while [[ $N -lt 12 ]]
     do 
-        if curl $STATIC_URL | grep " Welcome to Apache OpenServerless (incubating) static content distributor landing page!!!"; then            
+        # Accept both landing-page templates, but reject HTTP errors and unrelated pages.
+        if PAGE=$(curl --fail --silent --show-error --connect-timeout 5 --max-time 15 "$STATIC_URL") &&
+            printf '%s\n' "$PAGE" | grep -Fq 'Welcome to Apache OpenServerless' &&
+            printf '%s\n' "$PAGE" | grep -Fiq 'static content distributor landing page'; then
             echo SUCCESS STATIC
             RES=true; break
         else
