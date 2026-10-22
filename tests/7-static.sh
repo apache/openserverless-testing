@@ -18,9 +18,8 @@
 TYPE="${1:?test type}"
 TYPE="$(echo $TYPE | awk -F- '{print $1}')"
 
-ops config disable --minio
-ops config enable --seaweedfs --static
-ops update apply
+ops config enable --seaweedfs --static || exit $?
+ops update apply || exit $?
 
 ops util kube waitfor FOR=condition=ready OBJ=pod/openserverless-static-0 TIMEOUT=60
 ops setup openserverless wait-cm-value \
